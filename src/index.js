@@ -1,4 +1,2 @@
-const TelegramBot = require('./server.js')
-
-
-const telegramBot = new TelegramBot()
+const bot = require('./bot.js')
+const detuschBot = new bot()

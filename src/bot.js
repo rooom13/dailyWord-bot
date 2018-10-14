@@ -2,6 +2,9 @@
 
 const TelegramBot = require('node-telegram-bot-api')
 const https = require('https');
+const redis = require('redis')
+
+
 
 console.log(process.argv);
 
@@ -11,6 +14,14 @@ module.exports = class {
 
 
     constructor() {
+        this.client = redis.createClient()
+
+        this.client.on('error', (err)=> console.log('redis error', err))
+
+
+
+
+
         const TOKEN = process.argv[2]
         this.bot = new TelegramBot(TOKEN, {polling: true});
         let direction = {src: 'es', srcFlag: '🇪🇸', dst: 'de', dstFlag: '🇩🇪' }
@@ -28,7 +39,9 @@ module.exports = class {
                 case '/switch':
                 onSwitchReceived(msg)
                 break
-
+                case 'rand':
+                onRandReceived(msg)
+                break
                 default:
                 onWordReceived(msg)
                 break
@@ -49,6 +62,13 @@ module.exports = class {
         });
 
         // ON RECEIVED CALLBACKS
+        const onRandReceived = (msg) => {
+            const rndNum = Math.floor(Math.random() * 2984) + 1
+            this.client.get(rndNum,(err, res)=> {
+                console.log(err, res)
+                sendRandomResponse(res, msg)
+            })
+        }
         const onWordReceived = (msg) => {
             const word = msg.text.toString().toLowerCase()
             getWordData(word, direction)
@@ -156,6 +176,14 @@ module.exports = class {
             const toSentenceLine = `<b>${toLan}</b> ${toFlag}   ➡  ${toSentence}\n`
 
             const msgResponse = introLine + fromWordLine + toLine + sentencesLine + fromSentenceLine + toSentenceLine
+            this.bot.sendMessage(msg.chat.id, msgResponse, {parse_mode: 'HTML'});
+
+        }
+        const sendRandomResponse = (data, msg) => {
+
+            console.log(` - Sending word response`)
+            const parts = data.split('/')
+            const msgResponse = `${parts[0]} ${parts[1]} ${parts[2]}`
             this.bot.sendMessage(msg.chat.id, msgResponse, {parse_mode: 'HTML'});
 
         }
