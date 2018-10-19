@@ -30,6 +30,9 @@ module.exports = class {
 
             const userMsg = msg.text.toString().toLowerCase()
             switch (userMsg) {
+                case '/start':
+                onStartReceived(msg)
+                break
                 case '/help':
                 onHelpReceived(msg)
                 break
@@ -39,7 +42,7 @@ module.exports = class {
                 case '/switch':
                 onSwitchReceived(msg)
                 break
-                case 'rand':
+                case '/rand':
                 onRandReceived(msg)
                 break
                 default:
@@ -61,7 +64,13 @@ module.exports = class {
 
         });
 
+
+
         // ON RECEIVED CALLBACKS
+        const onStartReceived = (msg) => {
+
+            sendStartResponse(msg)
+        }
         const onRandReceived = (msg) => {
             const rndNum = Math.floor(Math.random() * 2984) + 1
             this.client.get(rndNum,(err, res)=> {
@@ -109,6 +118,17 @@ module.exports = class {
 
         }
 
+        const sendStartResponse = (msg) => {
+
+            const startMsg =
+            `Hello ${msg.from.first_name}!
+            Available commands:
+            · /help  ➡ Opens this help section
+            · /from  ➡ Sets the source language
+            · /lang  ➡ Sets the translation languages
+            · &lt;word&gt; ➡ Translates the word`
+            this.bot.sendMessage(msg.chat.id, startMsg, {parse_mode: 'HTML'});
+        }
         const sendHelpResponse = (msg) => {
 
             const helpMsg =
@@ -183,7 +203,7 @@ module.exports = class {
 
             console.log(` - Sending word response`)
             const parts = data.split('/')
-            const msgResponse = `${parts[0]} ${parts[1]} ${parts[2]}`
+            const msgResponse = `🇬🇧${parts[0]}\n🇩🇪${parts[1]} / ${parts[2]}`
             this.bot.sendMessage(msg.chat.id, msgResponse, {parse_mode: 'HTML'});
 
         }
