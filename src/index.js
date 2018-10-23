@@ -1,14 +1,15 @@
-// const bot = require('./bot.js')
-// const detuschBot = new bot()
+ const bot = require('./bot.js')
+ const detuschBot = new bot()
 
+/*
 const GoogleSpreadsheet = require('google-spreadsheet')
 const { promisify } = require('util')
 
 const credentials = require('./service-account.json')
 
-const SPREADSHEET_ID = `16DuyNoR14sthq8AEs4UAXzVI7HvOE9XME_514wMTiXg`
+const SPREADSHEET_ID2 = `1Jl1L0PwF4ftYMMvGOZ-_1ow_Z2ckxtAYX106TbpRlb0`
 async function accessSpreadsheet() {
-  const doc = new GoogleSpreadsheet(SPREADSHEET_ID)
+  const doc = new GoogleSpreadsheet(SPREADSHEET_ID2)
   await promisify(doc.useServiceAccountAuth)(credentials)
   const info = await promisify(doc.getInfo)()
   console.log(`Loaded doc: ` + info.title + ` by ` + info.author.email)
@@ -19,18 +20,18 @@ async function accessSpreadsheet() {
 
 
 
+
+
   const cells = await promisify(sheet.getCells)({
-    'min-row': 1,
-    'max-row': 5,
-    'min-col': 1,
-    'max-col': 2,
+    range:  'B3:B9',
+
     'return-empty': true,
 })
 for (const cell of cells) {
     console.log(`${cell.row},${cell.col}: ${cell.value}`)
 }
-console.log(cells)
 
 }
 
 accessSpreadsheet()
+*/
