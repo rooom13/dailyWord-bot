@@ -6,59 +6,54 @@ const redis = require('redis')
 
 
 
-console.log(process.argv);
 
 
 module.exports = class {
 
 
+    constructor(TOKEN, existsRedisClient) {
 
-    constructor() {
+        if (existsRedisClient) {
         this.client = redis.createClient()
+            this.client.on('error', (err) => console.log('redis error', err))
+        }
 
-        this.client.on('error', (err)=> console.log('redis error', err))
-
-
-
-
-
-        const TOKEN = process.argv[2]
-        this.bot = new TelegramBot(TOKEN, {polling: true});
-        let direction = {src: 'es', srcFlag: '🇪🇸', dst: 'de', dstFlag: '🇩🇪' }
+        this.bot = new TelegramBot(TOKEN, { polling: true });
+        let direction = { src: 'es', srcFlag: '🇪🇸', dst: 'de', dstFlag: '🇩🇪' }
 
         this.bot.on('message', (msg) => {
 
             const userMsg = msg.text.toString().toLowerCase()
             switch (userMsg) {
                 case '/start':
-                onStartReceived(msg)
-                break
+                    onStartReceived(msg)
+                    break
                 case '/help':
-                onHelpReceived(msg)
-                break
+                    onHelpReceived(msg)
+                    break
                 case '/lang':
-                onLangReceived(msg)
-                break
+                    onLangReceived(msg)
+                    break
                 case '/switch':
-                onSwitchReceived(msg)
-                break
+                    onSwitchReceived(msg)
+                    break
                 case '/rand':
-                onRandReceived(msg)
-                break
+                    existRedisClient ? onRandReceived(msg) : onWordReceived(msg)
+                    break
                 default:
-                onWordReceived(msg)
-                break
+                    onWordReceived(msg)
+                    break
             }
         });
         this.bot.on('callback_query', (data) => {
             switch (data.data) {
                 case 'switch':
-                onSwitchReceived(data.message)
-                break;
+                    onSwitchReceived(data.message)
+                    break;
                 case 'deToEs':
-                console.log('deToEs');
+                    console.log('deToEs');
                 default:
-                break
+                    break
 
             };
 
@@ -73,7 +68,7 @@ module.exports = class {
         }
         const onRandReceived = (msg) => {
             const rndNum = Math.floor(Math.random() * 2984) + 1
-            this.client.get(rndNum,(err, res)=> {
+            this.client.get(rndNum, (err, res) => {
                 console.log(err, res)
                 sendRandomResponse(res, msg)
             })
@@ -81,7 +76,7 @@ module.exports = class {
         const onWordReceived = (msg) => {
             const word = msg.text.toString().toLowerCase()
             getWordData(word, direction)
-            .then(response => sendWordResponse(response, msg), (error) => {sendFailResponse(error, msg )})
+                .then(response => sendWordResponse(response, msg), (error) => { sendFailResponse(error, msg) })
         }
         const onHelpReceived = (msg) => {
             sendHelpResponse(msg)
@@ -92,7 +87,7 @@ module.exports = class {
         }
 
         const switchLanguages = () => {
-            if(direction.src === 'es'){
+            if (direction.src === 'es') {
                 direction = {
                     src: 'de',
                     srcFlag: '🇩🇪',
@@ -110,40 +105,40 @@ module.exports = class {
         }
 
         // SEND RESPONSE
-        const sendFailResponse = (err, msg, ) => {
+        const sendFailResponse = (err, msg) => {
             console.log(' - Sending fail msg')
             console.log(err);
             this.bot.sendMessage(msg.chat.id, `There was a failure mate!\nThe word ${hightlight(msg.text)} was not in the dictionary 😢
-            ` + err, {parse_mode: 'HTML'});
+            ` + err, { parse_mode: 'HTML' });
 
         }
 
         const sendStartResponse = (msg) => {
 
             const startMsg =
-            `Hello ${msg.from.first_name}!
+                `Hello ${msg.from.first_name}!
             Available commands:
             · /help  ➡ Opens this help section
             · /from  ➡ Sets the source language
             · /lang  ➡ Sets the translation languages
             · &lt;word&gt; ➡ Translates the word`
-            this.bot.sendMessage(msg.chat.id, startMsg, {parse_mode: 'HTML'});
+            this.bot.sendMessage(msg.chat.id, startMsg, { parse_mode: 'HTML' });
         }
         const sendHelpResponse = (msg) => {
 
             const helpMsg =
-            `<b>HELP</b>
+                `<b>HELP</b>
             Available commands:
             · /help  ➡ Opens this help section
             · /from  ➡ Sets the source language
             · /lang  ➡ Sets the translation languages
             · &lt;word&gt; ➡ Translates the word`
-            this.bot.sendMessage(msg.chat.id, helpMsg, {parse_mode: 'HTML'});
+            this.bot.sendMessage(msg.chat.id, helpMsg, { parse_mode: 'HTML' });
         }
 
         const sendSwitchResponse = (msg) => {
             const switchMsg =
-            `Translating from ${direction.src} ${direction.srcFlag} to ${direction.dst} ${direction.dstFlag}`
+                `Translating from ${direction.src} ${direction.srcFlag} to ${direction.dst} ${direction.dstFlag}`
             this.bot.sendMessage(msg.chat.id, switchMsg, {
                 parse_mode: 'HTML',
                 reply_markup: JSON.stringify({
@@ -156,7 +151,7 @@ module.exports = class {
         const sendLangResponse = (msg) => {
 
             const langMsg =
-            `Choose the translation languages`
+                `Choose the translation languages`
             this.bot.sendMessage(msg.chat.id, langMsg, {
                 parse_mode: 'HTML',
                 reply_markup: JSON.stringify({
@@ -177,7 +172,7 @@ module.exports = class {
             const fromFlag = '🇪🇸'
 
             const toLan = data.dstLang
-            const toFlag =  '🇩🇪'
+            const toFlag = '🇩🇪'
 
             const fromWord = data.srcWord
             const toWord = data.dstWord
@@ -196,7 +191,7 @@ module.exports = class {
             const toSentenceLine = `<b>${toLan}</b> ${toFlag}   ➡  ${toSentence}\n`
 
             const msgResponse = introLine + fromWordLine + toLine + sentencesLine + fromSentenceLine + toSentenceLine
-            this.bot.sendMessage(msg.chat.id, msgResponse, {parse_mode: 'HTML'});
+            this.bot.sendMessage(msg.chat.id, msgResponse, { parse_mode: 'HTML' });
 
         }
         const sendRandomResponse = (data, msg) => {
@@ -204,7 +199,7 @@ module.exports = class {
             console.log(` - Sending word response`)
             const parts = data.split('/')
             const msgResponse = `🇬🇧${parts[0]}\n🇩🇪${parts[1]} / ${parts[2]}`
-            this.bot.sendMessage(msg.chat.id, msgResponse, {parse_mode: 'HTML'});
+            this.bot.sendMessage(msg.chat.id, msgResponse, { parse_mode: 'HTML' });
 
         }
 
@@ -214,8 +209,8 @@ module.exports = class {
             console.log('request', url);
             return new Promise((resolve, reject) => {
                 https.get(url, (resp) => {
-                    console.log("Response status: "  + resp.statusCode);
-                    if(resp.statusCode === 200){
+                    console.log("Response status: " + resp.statusCode);
+                    if (resp.statusCode === 200) {
                         let data = '';
                         resp.on('data', (chunk) => {
                             data += chunk;
@@ -233,27 +228,27 @@ module.exports = class {
                     reject(err);
                 });
             }
-        )
-    }
-
-    const parseData = (receivedData) => {
-        console.log(` - Parsing`)
-
-        const parsedData = {
-            srcLang: receivedData.src_lang,
-            dstLang: receivedData.dst_lang,
-            srcFlag: direction.srcFlag,
-            dstFlag: direction.dstFlag,
-            srcWord: receivedData.query,
-            dstWord: receivedData.exact_matches[0].translations[0].text,
-            srcSentence: receivedData.real_examples[0].src,
-            dstSentence:  receivedData.real_examples[0].dst
+            )
         }
 
-        return parsedData
+        const parseData = (receivedData) => {
+            console.log(` - Parsing`)
+
+            const parsedData = {
+                srcLang: receivedData.src_lang,
+                dstLang: receivedData.dst_lang,
+                srcFlag: direction.srcFlag,
+                dstFlag: direction.dstFlag,
+                srcWord: receivedData.query,
+                dstWord: receivedData.exact_matches[0].translations[0].text,
+                srcSentence: receivedData.real_examples[0].src,
+                dstSentence: receivedData.real_examples[0].dst
+            }
+
+            return parsedData
+        }
+
+        const hightlight = (word) => `<b> ${word} </b>`
+
     }
-
-    const hightlight = (word) => `<b> ${word} </b>`
-
-}
 }
