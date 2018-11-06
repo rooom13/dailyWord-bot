@@ -20,21 +20,58 @@ async function accessSpreadsheet() {
 
 
   const cells = await promisify(sheet.getCells)({
-    range: `B${rndIndex}:B${rndIndex}`,
+    range: `B${rndIndex}:K${rndIndex}`,
 
     'return-empty': true,
   })
 
-  const word = {
+
+    let getExamples = () => {
+
+    let examples = []
+    let i = 0
+    for(const cell of cells.splice(2)){
+      let example = {}
+      if(cell.value){
+      if(i%2)example.de = cell.value
+      else example.es = cell.value
+
+      examples.push(example)
+    
+    }}
+      return examples
+    }
+
+   
+
+   let word = {
     de: cells[0].value,
     es: cells[1].value,
-    examples: []
-    
-
-
-
+    examples: getExamples()
   }
+  
+/*   let i = 0  
+  for(const cell of cells){
+    console.log(i)
+    if(i == 0) word.de = cell.value
+    else if(i == 1) word.es = cell.value
+    else
+    {
+      let example = {}
+      if(i%2) example.de = cell.value
+      else example.es = cell.value
+      word.examples.push(example)
+    }
+    ++i
+    console.log(i)
+
+  }  */
+  
+
+ 
   console.log(word)
+
+  
 
 
 }
