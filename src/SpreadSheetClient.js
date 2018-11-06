@@ -10,22 +10,32 @@ async function accessSpreadsheet() {
   const info = await promisify(doc.getInfo)()
   console.log(`Loaded doc: ` + info.title + ` by ` + info.author.email)
   const sheet = info.worksheets[0]
-  console.log(
-    `sheet 1: ` + sheet.title + ` ` + sheet.rowCount + `x` + sheet.colCount
-  )
 
+  const wordCount = sheet.rowCount
 
+  console.log(`word count: ${wordCount}`)
+
+  const rndIndex = Math.floor(Math.random() *(wordCount-2)) +2
 
 
 
   const cells = await promisify(sheet.getCells)({
-    range:  'B3:B9',
+    range: `B${rndIndex}:B${rndIndex}`,
 
     'return-empty': true,
-})
-for (const cell of cells) {
-    console.log(`${cell.row},${cell.col}: ${cell.value}`)
-}
+  })
+
+  const word = {
+    de: cells[0].value,
+    es: cells[1].value,
+    examples: []
+    
+
+
+
+  }
+  console.log(word)
+
 
 }
 
