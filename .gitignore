@@ -2,3 +2,4 @@ node_modules
 package-lock.json
 service-account.json
 TOKEN
+telegramBot_token.json
