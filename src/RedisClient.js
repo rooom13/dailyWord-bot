@@ -22,4 +22,12 @@ module.exports = class {
             });
         });
     }
+
+    removeChatId(chatId) {
+        return new Promise(resolve => {
+            this.client.srem(['users', chatId], (err, res) => {
+                resolve(res)
+            });
+        });
+    }
 }

@@ -2,7 +2,7 @@
 
 const TelegramBot = require('node-telegram-bot-api')
 const https = require('https');
-const redis = require('redis')
+const RedisClient = require('./RedisClient')
 
 
 
@@ -16,26 +16,32 @@ module.exports = class {
 
 
         this.bot = new TelegramBot(TOKEN, { polling: true });
-        let direction = { src: 'es', srcFlag: '🇪🇸', dst: 'de', dstFlag: '🇩🇪' }
+        this.redisClient = new RedisClient()
+        this.direction = { src: 'es', srcFlag: '🇪🇸', dst: 'de', dstFlag: '🇩🇪' }
+        this.availableCommands = `Available commands:
+    · /help   ➡ Opens this help section
+    · /stop   ➡ Stops me sending words
+    · /start  ➡ Makes me start sending words
+    · /switch ➡ Switches the translation direction
+    · &lt;word&gt; ➡ Translates the word`
 
         this.bot.on('message', (msg) => {
-
             const userMsg = msg.text.toString().toLowerCase()
             switch (userMsg) {
                 case '/start':
                     this.onStartReceived(msg)
                     break
+                case '/stop':
+                    this.onStopReceived(msg)
+                    break
                 case '/help':
                     this.onHelpReceived(msg)
-                    break
-                case '/lang':
-                    this.onLangReceived(msg)
                     break
                 case '/switch':
                     this.onSwitchReceived(msg)
                     break
                 case '/rand':
-                    this.sendWordsToAll([1], {})
+
                     break
                 default:
                     this.onWordReceived(msg)
@@ -47,49 +53,57 @@ module.exports = class {
                 case 'switch':
                     this.onSwitchReceived(data.message)
                     break;
-                case 'deToEs':
-                    console.log('deToEs');
+                case 'start':
+                    this.onStartReceived(data.message)
+                    break;
+                case 'stop':
+                    this.onStopReceived(data.message)
+                    break;
                 default:
                     break
-
             };
-
         });
     }
 
 
 
     // ON RECEIVED CALLBACKS
-    onStartReceived(msg){
-
+    onStartReceived(msg) {
+        this.redisClient.saveChatId(msg.chat.id)
         this.sendStartResponse(msg)
     }
-    onRandReceived(msg){
+    onStopReceived(msg) {
+        this.redisClient.removeChatId(msg.chat.id)
+        this.sendStopResponse(msg)
+    }
+    onRandReceived(msg) {
 
     }
-    onWordReceived(msg){
+    onWordReceived(msg) {
+        console.log(12)
         const word = msg.text.toString().toLowerCase()
-        this.getWordData(word, direction)
+        this.getWordData(word, this.direction)
             .then(response => this.sendWordResponse(response, msg), (error) => { this.sendFailResponse(error, msg) })
     }
-    onHelpReceived(msg){
+
+    onHelpReceived(msg) {
         this.sendHelpResponse(msg)
     }
-    onSwitchReceived(msg){
+    onSwitchReceived(msg) {
         this.switchLanguages()
         this.sendSwitchResponse(msg)
     }
 
-    switchLanguages(){
-        if (direction.src === 'es') {
-            direction = {
+    switchLanguages() {
+        if (this.direction.src === 'es') {
+            this.direction = {
                 src: 'de',
                 srcFlag: '🇩🇪',
                 dst: 'es',
                 dstFlag: '🇪🇸'
             }
         } else {
-            direction = {
+            this.direction = {
                 src: 'es',
                 srcFlag: '🇪🇸',
                 dst: 'de',
@@ -99,7 +113,7 @@ module.exports = class {
     }
 
     // SEND RESPONSE
-    sendFailResponse(err, msg){
+    sendFailResponse(err, msg) {
         console.log(' - Sending fail msg')
         console.log(err);
         this.bot.sendMessage(msg.chat.id, `There was a failure mate!\nThe word ${this.hightlight(msg.text)} was not in the dictionary 😢
@@ -107,32 +121,42 @@ module.exports = class {
 
     }
 
-    sendStartResponse(msg){
+    sendStartResponse(msg) {
 
         const startMsg =
-            `Hello ${msg.from.first_name}!
-        Available commands:
-        · /help  ➡ Opens this help section
-        · /from  ➡ Sets the source language
-        · /lang  ➡ Sets the translation languages
-        · &lt;word&gt; ➡ Translates the word`
-        this.bot.sendMessage(msg.chat.id, startMsg, { parse_mode: 'HTML' });
+        `Hello ${msg.from.first_name}!\n${this.availableCommands}
+        `
+        this.bot.sendMessage(msg.chat.id, startMsg, {
+            parse_mode: 'HTML', reply_markup: JSON.stringify({
+                inline_keyboard: [
+                    [{ text: '/stop', callback_data: 'stop' }]
+                ]
+            })
+        });
     }
-    sendHelpResponse(msg){
 
-        const helpMsg =
-            `<b>HELP</b>
-        Available commands:
-        · /help  ➡ Opens this help section
-        · /from  ➡ Sets the source language
-        · /lang  ➡ Sets the translation languages
-        · &lt;word&gt; ➡ Translates the word`
+    sendStopResponse(msg) {
+        const stopMsg =
+            `You will no longer receive words!\n...Unles you use /start`
+        this.bot.sendMessage(msg.chat.id, stopMsg, {
+            parse_mode: 'HTML',
+            reply_markup: JSON.stringify({
+                inline_keyboard: [
+                    [{ text: '/start', callback_data: 'start' }]
+                ]
+            })
+        });
+    }
+
+    sendHelpResponse(msg) {
+
+        const helpMsg =`<b>HELP</b>\n${this.availableCommands}`
         this.bot.sendMessage(msg.chat.id, helpMsg, { parse_mode: 'HTML' });
     }
 
-    sendSwitchResponse(msg){
+    sendSwitchResponse(msg) {
         const switchMsg =
-            `Translating from ${direction.src} ${direction.srcFlag} to ${direction.dst} ${direction.dstFlag}`
+            `Translating from ${this.direction.src} ${this.direction.srcFlag} to ${this.direction.dst} ${this.direction.dstFlag}`
         this.bot.sendMessage(msg.chat.id, switchMsg, {
             parse_mode: 'HTML',
             reply_markup: JSON.stringify({
@@ -142,7 +166,7 @@ module.exports = class {
             })
         });
     }
-    sendLangResponse(msg){
+    sendLangResponse(msg) {
 
         const langMsg =
             `Choose the translation languages`
@@ -150,14 +174,14 @@ module.exports = class {
             parse_mode: 'HTML',
             reply_markup: JSON.stringify({
                 inline_keyboard: [
-                    [{ text: '🇪🇸 ES  ➡  🇩🇪 DE', callback_data: 'esToDe' }],
-                    [{ text: '🇩🇪 DE  ➡  🇪🇸 ES', callback_data: 'deToEs' }]
+                    [{ text: '🇪🇸 ES  ➡  🇩🇪 DE', callback_data: 'switch' }],
+                    [{ text: '🇩🇪 DE  ➡  🇪🇸 ES', callback_data: 'switch' }]
                 ]
             })
 
         });
     }
-    sendWordResponse(receivedData, msg){
+    sendWordResponse(receivedData, msg) {
 
         const data = this.parseData(receivedData)
         console.log(` - Sending word response`)
@@ -188,7 +212,7 @@ module.exports = class {
         this.bot.sendMessage(msg.chat.id, msgResponse, { parse_mode: 'HTML' });
 
     }
-    sendRandomResponse(data, msg){
+    sendRandomResponse(data, msg) {
 
         console.log(` - Sending word response`)
         const parts = data.split('/')
@@ -198,7 +222,7 @@ module.exports = class {
     }
 
     // GET TRANSLATION HTTP REQUEST
-    getWordData(word, dir){
+    getWordData(word, dir) {
         const url = `https://linguee-api.herokuapp.com/api?q=${word}&src=${dir.src}&dst=${dir.dst}`
         console.log('request', url);
         return new Promise((resolve, reject) => {
@@ -225,14 +249,14 @@ module.exports = class {
         )
     }
 
-    parseData(receivedData){
+    parseData(receivedData) {
         console.log(` - Parsing`)
 
         const parsedData = {
             srcLang: receivedData.src_lang,
             dstLang: receivedData.dst_lang,
-            srcFlag: direction.srcFlag,
-            dstFlag: direction.dstFlag,
+            srcFlag: this.direction.srcFlag,
+            dstFlag: this.direction.dstFlag,
             srcWord: receivedData.query,
             dstWord: receivedData.exact_matches[0].translations[0].text,
             srcSentence: receivedData.real_examples[0].src,
@@ -242,13 +266,18 @@ module.exports = class {
         return parsedData
     }
 
-    hightlight(word){`<b> ${word} </b>`}
+    hightlight(word) { return `<b> ${word} </b>` }
 
 
 
 
-    sendWordsToAll(chat_ids, word) {
-        chat_ids.forEach(chat_id =>
-            this.bot.sendMessage(chat_id, `Hola que passa`, { parse_mode: 'HTML' }))
+    broadcast(word) {
+        this.redisClient.getAllActiveChatId()
+            .then(chat_ids => {
+                chat_ids.forEach(chat_id =>
+                    this.bot.sendMessage(chat_id, `Hola que passa`, { parse_mode: 'HTML' }))
+            })
+
+
     }
 }
