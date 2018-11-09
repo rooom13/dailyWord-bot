@@ -1,8 +1,27 @@
 const SpreadSheetClient = require('./SpreadSheetClient')
+const RedisClient = require('./RedisClient')
+
 
 const sheetClient = new SpreadSheetClient()
+const redisClient = new RedisClient()
 
-sheetClient.getWord().then( word => console.log(word) )
+const isFake = true
 
-// const a = await sheetClient.getWord()
-// console.log(a   )
+redisClient.saveChatId(999)
+
+const getAndSendWord = () => {
+
+    Promise.all([sheetClient.getWord(isFake), redisClient.getAllActiveChatId()]).then( result => console.log(result))
+
+}
+
+
+getAndSendWord()
+
+/* 
+Falta: 
+    conectar bot con server 
+    Crear users on /Start
+    Timer
+
+*/
