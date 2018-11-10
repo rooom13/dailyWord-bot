@@ -13,14 +13,14 @@ module.exports = class {
   }
 
   async getWord(fake) {
-
     if (fake) {
       return new Promise(resolve => {
-        setTimeout(() => resolve({
+        setTimeout(() => {
+          resolve({
           de: 'Kartoffel', 
           es: 'Patata',
           examples: [{ de: 'Die Kartoffek ist lecker', es: 'La patata es deliciosa' }, { de: 'Die Kartoffek ist kaput', es: 'La patata está rot' }]
-        }), 1000)
+        })}, 1000)
       });
     }
 

@@ -212,14 +212,6 @@ module.exports = class {
         this.bot.sendMessage(msg.chat.id, msgResponse, { parse_mode: 'HTML' });
 
     }
-    sendRandomResponse(data, msg) {
-
-        console.log(` - Sending word response`)
-        const parts = data.split('/')
-        const msgResponse = `🇬🇧${parts[0]}\n🇩🇪${parts[1]} / ${parts[2]}`
-        this.bot.sendMessage(msg.chat.id, msgResponse, { parse_mode: 'HTML' });
-
-    }
 
     // GET TRANSLATION HTTP REQUEST
     getWordData(word, dir) {
@@ -268,16 +260,31 @@ module.exports = class {
 
     hightlight(word) { return `<b> ${word} </b>` }
 
-
-
-
-    broadcast(word) {
+    broadcastWord(word) {
         this.redisClient.getAllActiveChatId()
             .then(chat_ids => {
                 chat_ids.forEach(chat_id =>
                     this.bot.sendMessage(chat_id, `Hola que passa`, { parse_mode: 'HTML' }))
             })
+    }
 
+    sendWordMessage(word, chat_id) {
+
+        console.log(` - Sending word response`)
+
+
+
+        const wordMsg = `🇩🇪${word.de}\n🇪🇸${word.es}\n${parts[2]}`
+        this.bot.sendMessage(chat_id, wordMsg, { parse_mode: 'HTML' });
 
     }
+
+
 }
+
+/*  CREATE MESSAGE BROADCAST
+{
+    de: 'Kartoffel', 
+    es: 'Patata',
+    examples: [{ de: 'Die Kartoffek ist lecker', es: 'La patata es deliciosa' }, { de: 'Die Kartoffek ist kaput', es: 'La patata está rot' }]
+  } */
