@@ -11,12 +11,12 @@ const RedisClient = require('./RedisClient')
 module.exports = class {
 
 
-    constructor(TOKEN) {
+    constructor(TOKEN, fakeUsers) {
 
 
 
         this.bot = new TelegramBot(TOKEN, { polling: true });
-        this.redisClient = new RedisClient()
+        this.redisClient = new RedisClient(fakeUsers)
         this.direction = { src: 'es', srcFlag: '🇪🇸', dst: 'de', dstFlag: '🇩🇪' }
         this.availableCommands = `Available commands:
     · /help   ➡ Opens this help section
@@ -80,7 +80,6 @@ module.exports = class {
 
     }
     onWordReceived(msg) {
-        console.log(12)
         const word = msg.text.toString().toLowerCase()
         this.getWordData(word, this.direction)
             .then(response => this.sendWordResponse(response, msg), (error) => { this.sendFailResponse(error, msg) })
@@ -124,7 +123,7 @@ module.exports = class {
     sendStartResponse(msg) {
 
         const startMsg =
-        `Hello ${msg.from.first_name}!\n${this.availableCommands}
+            `Hello ${msg.from.first_name}!\n${this.availableCommands}
         `
         this.bot.sendMessage(msg.chat.id, startMsg, {
             parse_mode: 'HTML', reply_markup: JSON.stringify({
@@ -150,7 +149,7 @@ module.exports = class {
 
     sendHelpResponse(msg) {
 
-        const helpMsg =`<b>HELP</b>\n${this.availableCommands}`
+        const helpMsg = `<b>HELP</b>\n${this.availableCommands}`
         this.bot.sendMessage(msg.chat.id, helpMsg, { parse_mode: 'HTML' });
     }
 
@@ -259,32 +258,24 @@ module.exports = class {
     }
 
     hightlight(word) { return `<b> ${word} </b>` }
-
+    hightlightInSentence(sentence, word) {
+        return sentence.replace(word.toLowerCase(), foundWord => `<b> ${foundWord} </b>`)
+    }
     broadcastWord(word) {
         this.redisClient.getAllActiveChatId()
             .then(chat_ids => {
                 chat_ids.forEach(chat_id =>
-                    this.bot.sendMessage(chat_id, `Hola que passa`, { parse_mode: 'HTML' }))
+                    this.sendWordMessage(word, chat_id)
+                )
             })
     }
 
     sendWordMessage(word, chat_id) {
-
-        console.log(` - Sending word response`)
-
-
-
-        const wordMsg = `🇩🇪${word.de}\n🇪🇸${word.es}\n${parts[2]}`
+        console.log(` - Sending word broadcast response`)
+        let examplesMsg = ''
+        word.examples.forEach(example => examplesMsg += `\n\n🇩🇪 ${this.hightlightInSentence(example.de, word.de[0])}\n🇪🇸 ${this.hightlightInSentence(example.es, word.es[0])}`)
+        const wordMsg = `🇩🇪 ${word.de}\n🇪🇸 ${word.es}${examplesMsg}`
         this.bot.sendMessage(chat_id, wordMsg, { parse_mode: 'HTML' });
-
     }
 
-
 }
-
-/*  CREATE MESSAGE BROADCAST
-{
-    de: 'Kartoffel', 
-    es: 'Patata',
-    examples: [{ de: 'Die Kartoffek ist lecker', es: 'La patata es deliciosa' }, { de: 'Die Kartoffek ist kaput', es: 'La patata está rot' }]
-  } */

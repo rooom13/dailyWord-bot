@@ -5,22 +5,23 @@ const credentials = require('./service-account.json')
 
 
 module.exports = class {
-  constructor() {
+  constructor(fakeWordRequest) {
     this.SPREADSHEET_ID = `1Jl1L0PwF4ftYMMvGOZ-_1ow_Z2ckxtAYX106TbpRlb0`
     this.doc = new GoogleSpreadsheet(this.SPREADSHEET_ID)
-
+    this.fakeWordRequest = fakeWordRequest
 
   }
 
-  async getWord(fake) {
-    if (fake) {
+  async getWord() {
+    if (this.fakeWordRequest) {
       return new Promise(resolve => {
         setTimeout(() => {
           resolve({
-          de: 'Kartoffel', 
-          es: 'Patata',
-          examples: [{ de: 'Die Kartoffek ist lecker', es: 'La patata es deliciosa' }, { de: 'Die Kartoffek ist kaput', es: 'La patata está rot' }]
-        })}, 1000)
+            de: 'Kartoffel',
+            es: 'Patata',
+            examples: [{ de: 'Die Kartoffel ist lecker', es: 'La patata es deliciosa' }, { de: 'Die Kartoffel ist kaput', es: 'La patata está rota' }]
+          })
+        }, 0)
       });
     }
 
@@ -29,9 +30,6 @@ module.exports = class {
     await promisify(this.doc.useServiceAccountAuth)(credentials)
 
     const info = await promisify(this.doc.getInfo)()
-
-    console.log(`Loaded: ` + info.title + ` by ` + info.author.email)
-
     const sheet = info.worksheets[0]
     const wordCount = sheet.rowCount
     const rndIndex = Math.floor(Math.random() * (wordCount - 2)) + 2
@@ -43,12 +41,17 @@ module.exports = class {
     let getExamples = () => {
       let examples = []
       let i = 0
+      let example = null
       for (const cell of cells.splice(2)) {
-        let example = {}
         if (cell.value) {
-          if (i % 2) example.de = cell.value
-          else example.es = cell.value
-          examples.push(example)
+          if (i % 2) {
+            example.es = cell.value
+            examples.push(example)
+          }
+          else {
+            example= {}
+            example.de = cell.value
+          }
         }
         ++i
       }
@@ -61,7 +64,6 @@ module.exports = class {
       examples: getExamples()
     }
 
-    console.log('word obtained')
     return new Promise(resolve => {
       resolve(word);
     });

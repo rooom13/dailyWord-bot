@@ -1,17 +1,21 @@
 const SpreadSheetClient = require('./SpreadSheetClient')
-const TelegramBot = require('./bot')
-// const CronJob = require('cron'),CronJob;
-const { TOKEN } = require('./telegramBot_token.json') //'628444584:AAEa3EzJFpRP8IQjEPEwL6olA_YI2Pzfoyo' ||
+const TelegramBot = require('./TelegramBot')
+const { TOKEN } = require('./telegramBot_token.json')
 
-const sheetClient = new SpreadSheetClient()
-const telegramBot = new TelegramBot(TOKEN)
-const isFake = true
 
+
+const debug = {
+    fakeWord: false,
+    fakeUsers: false
+}
+
+const sheetClient = new SpreadSheetClient(debug.fakeWord)
+const telegramBot = new TelegramBot(TOKEN, debug.fakeUsers)
 
 
 
 const getAndSendWord = () => {
-    sheetClient.getWord(isFake).then(word => telegramBot.broadcastWord(word))
+    sheetClient.getWord().then(word => telegramBot.broadcastWord(word))
 }
 // getAndSendWord()
 
@@ -19,7 +23,7 @@ const getAndSendWord = () => {
 
 var CronJob = require('cron').CronJob;
 new CronJob('40 12,18,20 * * 0-6', function () {
-    console.log('You will see this message every second');
+    console.log(`Word broadcast sent at ${new Date().toString()}`);
     getAndSendWord()
 
 }, null, true, 'Europe/Madrid');
