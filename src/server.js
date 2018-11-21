@@ -1,12 +1,13 @@
 const SpreadSheetClient = require('./SpreadSheetClient')
 const TelegramBot = require('./TelegramBot')
-const { TOKEN } = require('./telegramBot_token.json')
+const { TOKEN, TEST_TOKEN } = require('./telegramBot_token.json')
 
 
-
+// Set testBo: true when developing
 const debug = {
     fakeWord: false,
     fakeUsers: false,
+    testBot: false,
     redisInDifferentHost: process.argv[2] !== 'local'
 
 }
@@ -17,14 +18,13 @@ console.log(debug)
 
 
 const sheetClient = new SpreadSheetClient(debug.fakeWord)
-const telegramBot = new TelegramBot(TOKEN, debug.redisInDifferentHost, debug.fakeUsers)
+const telegramBot = new TelegramBot(debug.testBot ? TEST_TOKEN: TOKEN, debug.redisInDifferentHost, debug.fakeUsers)
 
 
 
 const getAndSendWord = () => {
     sheetClient.getWord().then(word => telegramBot.broadcastWord(word))
 }
-// getAndSendWord()
 
 
 

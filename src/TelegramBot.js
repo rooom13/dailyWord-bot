@@ -13,10 +13,6 @@ module.exports = class {
 
     constructor(TOKEN, redisInDifferentHost, fakeUsers) {
 
-        console.log('SEX')
-
-        console.log()
-
         this.bot = new TelegramBot(TOKEN, { polling: true });
         this.redisClient = new RedisClient(redisInDifferentHost, fakeUsers)
         this.direction = { src: 'es', srcFlag: '🇪🇸', dst: 'de', dstFlag: '🇩🇪' }
@@ -41,9 +37,6 @@ module.exports = class {
                     break
                 case '/switch':
                     this.onSwitchReceived(msg)
-                    break
-                case '/rand':
-
                     break
                 default:
                     this.onWordReceived(msg)
@@ -77,9 +70,6 @@ module.exports = class {
     onStopReceived(msg) {
         this.redisClient.removeChatId(msg.chat.id)
         this.sendStopResponse(msg)
-    }
-    onRandReceived(msg) {
-
     }
     onWordReceived(msg) {
         const word = msg.text.toString().toLowerCase()
