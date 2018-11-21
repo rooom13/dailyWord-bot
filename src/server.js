@@ -6,15 +6,18 @@ const { TOKEN } = require('./telegramBot_token.json')
 
 const debug = {
     fakeWord: false,
-    fakeUsers: false //Fale DB
+    fakeUsers: false,
+    redisInDifferentHost: process.argv[2] !== 'local'
+
 }
+ 
 
 console.log('DEBUG')
 console.log(debug)
 
 
 const sheetClient = new SpreadSheetClient(debug.fakeWord)
-const telegramBot = new TelegramBot(TOKEN, debug.fakeUsers)
+const telegramBot = new TelegramBot(TOKEN, debug.redisInDifferentHost, debug.fakeUsers)
 
 
 

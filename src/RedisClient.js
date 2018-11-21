@@ -2,11 +2,11 @@ const redis = require('redis')
 
 module.exports = class {
 
-    constructor(fakeUsers) {
+    constructor(redisInDifferentHost, fakeUsers) {
         this.fakeUsers = fakeUsers
 
         if (!this.fakeUsers) {
-            this.client = redis.createClient({host: 'redis'})
+            this.client = redisInDifferentHost ? redis.createClient({ host: 'redis' }) : redis.createClient()
             this.client.on('error', (err) => console.log('redis error', err))
         }
     }

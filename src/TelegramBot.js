@@ -11,12 +11,14 @@ const RedisClient = require('./RedisClient')
 module.exports = class {
 
 
-    constructor(TOKEN, fakeUsers) {
+    constructor(TOKEN, redisInDifferentHost, fakeUsers) {
 
+        console.log('SEX')
 
+        console.log()
 
         this.bot = new TelegramBot(TOKEN, { polling: true });
-        this.redisClient = new RedisClient(fakeUsers)
+        this.redisClient = new RedisClient(redisInDifferentHost, fakeUsers)
         this.direction = { src: 'es', srcFlag: '🇪🇸', dst: 'de', dstFlag: '🇩🇪' }
         this.availableCommands = `Available commands:
     · /help   ➡ Opens this help section
