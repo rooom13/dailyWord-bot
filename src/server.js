@@ -6,8 +6,8 @@ const { TOKEN, TEST_TOKEN } = require('./telegramBot_token.json')
 // Set testBo: true when developing
 const debug = {
     fakeWord: false,
-    fakeUsers: false,
-    testBot: false,
+    fakeUsers: true,
+    testBot: true,
     redisInDifferentHost: process.argv[2] !== 'local'
 
 }

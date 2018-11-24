@@ -23,6 +23,26 @@ module.exports = class {
         });
     }
 
+    async getAllUsers() {
+
+
+        return new Promise(resolve => resolve([
+            {
+                chatId: 123123,
+                name: 'Pedro',
+                dir: 'es',
+                isActive: true
+            },
+            {
+                chatId: 33,
+                name: 'Pssedro',
+                dir: 'de',
+                isActive: false
+            }
+
+        ]))
+    }
+
     saveChatId(chatId) {
 
         if (!this.fakeUsers) {

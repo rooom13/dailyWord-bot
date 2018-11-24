@@ -38,6 +38,9 @@ module.exports = class {
                 case '/switch':
                     this.onSwitchReceived(msg)
                     break
+                case '/users':
+                    this.onUsersReceived(msg)
+                    break
                 default:
                     this.onWordReceived(msg)
                     break
@@ -83,6 +86,15 @@ module.exports = class {
     onSwitchReceived(msg) {
         this.switchLanguages()
         this.sendSwitchResponse(msg)
+    }
+
+    onUsersReceived(msg) {
+
+
+        const users = this.redisClient.getAllUsers().then(users =>
+            this.sendUsersResponse(msg, users)
+        )
+
     }
 
     switchLanguages() {
@@ -157,6 +169,16 @@ module.exports = class {
             })
         });
     }
+
+    sendUsersResponse(msg, users) {
+        let usersMsg = 'Users list\n'
+        users.forEach(user => usersMsg += ` - ${user.chatId} ${user.isActive ? '😀':'😴'}\n   name:${user.name}\n   ${user.dir}\n`)
+
+        this.bot.sendMessage(msg.chat.id, usersMsg, {
+            parse_mode: 'HTML',
+        });
+    }
+
     sendLangResponse(msg) {
 
         const langMsg =
