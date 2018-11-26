@@ -60,7 +60,7 @@ module.exports = class {
         });
 
         //user info
-        this.client.hmset([`userInfo:${chatId}`, 'name', msg.chat.first_name, 'isActive', '1', 'dir', 'es'], (err, res) => {
+        this.client.hmset([`userInfo:${msg.chat.id}`, 'name', msg.chat.first_name, 'isActive', '1', 'dir', 'es'], (err, res) => {
             if (err) console.log(err)
         });
 
