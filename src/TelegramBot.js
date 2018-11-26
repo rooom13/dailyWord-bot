@@ -3,6 +3,7 @@
 const TelegramBot = require('node-telegram-bot-api')
 const https = require('https');
 const RedisClient = require('./RedisClient')
+const { ADMIN_CHAT_ID } = require('./telegramBot_token.json')
 
 
 
@@ -11,11 +12,10 @@ const RedisClient = require('./RedisClient')
 module.exports = class {
 
 
-    constructor(TOKEN, redisInDifferentHost, fakeUsers) {
+    constructor(TOKEN, redisInDifferentHost) {
 
         this.bot = new TelegramBot(TOKEN, { polling: true });
-        this.redisClient = new RedisClient(redisInDifferentHost, fakeUsers)
-        this.direction = { src: 'es', srcFlag: '🇪🇸', dst: 'de', dstFlag: '🇩🇪' }
+        this.redisClient = new RedisClient(redisInDifferentHost)
         this.availableCommands = `Available commands:
     · /help   ➡ Opens this help section
     · /stop   ➡ Stops me sending words
@@ -67,52 +67,53 @@ module.exports = class {
 
     // ON RECEIVED CALLBACKS
     onStartReceived(msg) {
-        this.redisClient.saveChatId(msg.chat.id)
+        this.redisClient.saveUser(msg)
         this.sendStartResponse(msg)
     }
     onStopReceived(msg) {
-        this.redisClient.removeChatId(msg.chat.id)
+        this.redisClient.removeChatIdFromActive(msg.chat.id)
         this.sendStopResponse(msg)
     }
     onWordReceived(msg) {
         const word = msg.text.toString().toLowerCase()
-        this.getWordData(word, this.direction)
-            .then(response => this.sendWordResponse(response, msg), (error) => { this.sendFailResponse(error, msg) })
+
+        this.redisClient.getUserDir(msg.chat.id).then(dir => {
+            const direction = this.getCompleteDirection(dir)
+
+            this.getWordData(word, direction)
+                .then(response => this.sendWordResponse(response, msg, direction), (error) => { this.sendFailResponse(error, msg) })
+        }
+        )
     }
 
     onHelpReceived(msg) {
         this.sendHelpResponse(msg)
     }
     onSwitchReceived(msg) {
-        this.switchLanguages()
-        this.sendSwitchResponse(msg)
+        this.switchLanguage(msg.chat.id).then(dir => this.sendSwitchResponse(msg, dir))
+
     }
 
     onUsersReceived(msg) {
 
+        if (msg.chat.id === ADMIN_CHAT_ID) {
+            this.redisClient.getUsersInfo().then(users =>
+                this.sendUsersResponse(msg, users)
+            )
+        } else {
 
-        const users = this.redisClient.getAllUsers().then(users =>
-            this.sendUsersResponse(msg, users)
-        )
+        }
 
     }
 
-    switchLanguages() {
-        if (this.direction.src === 'es') {
-            this.direction = {
-                src: 'de',
-                srcFlag: '🇩🇪',
-                dst: 'es',
-                dstFlag: '🇪🇸'
-            }
-        } else {
-            this.direction = {
-                src: 'es',
-                srcFlag: '🇪🇸',
-                dst: 'de',
-                dstFlag: '🇩🇪'
-            }
-        }
+
+
+    switchLanguage(chatId) {
+
+        return new Promise((resolve, rejec) => this.redisClient.switchLanguage(chatId).then(dir => resolve(dir)))
+
+
+
     }
 
     // SEND RESPONSE
@@ -157,9 +158,14 @@ module.exports = class {
         this.bot.sendMessage(msg.chat.id, helpMsg, { parse_mode: 'HTML' });
     }
 
-    sendSwitchResponse(msg) {
+
+
+    sendSwitchResponse(msg, dir) {
+
+        const direction = this.getCompleteDirection(dir)
+
         const switchMsg =
-            `Translating from ${this.direction.src} ${this.direction.srcFlag} to ${this.direction.dst} ${this.direction.dstFlag}`
+            `Translating from ${direction.src} ${direction.srcFlag} to ${direction.dst} ${direction.dstFlag}`
         this.bot.sendMessage(msg.chat.id, switchMsg, {
             parse_mode: 'HTML',
             reply_markup: JSON.stringify({
@@ -172,38 +178,31 @@ module.exports = class {
 
     sendUsersResponse(msg, users) {
         let usersMsg = 'Users list\n'
-        users.forEach(user => usersMsg += ` - ${user.chatId} ${user.isActive ? '😀':'😴'}\n   name:${user.name}\n   ${user.dir}\n`)
+        users.forEach(user => usersMsg += ` - ${user.chatId} ${user.isActive ? '😀' : '😴'}\n   name: ${user.name}\n   dir: ${user.dir === 'es' ? '🇪🇸' : '🇩🇪'}\n`)
 
         this.bot.sendMessage(msg.chat.id, usersMsg, {
             parse_mode: 'HTML',
         });
     }
 
-    sendLangResponse(msg) {
-
-        const langMsg =
-            `Choose the translation languages`
-        this.bot.sendMessage(msg.chat.id, langMsg, {
+    sendNoAdminResponse(msg) {
+        let usersMsg = 'Loitering around my github?\n Do not hesitate to greet me! 😀'
+        this.bot.sendMessage(msg.chat.id, usersMsg, {
             parse_mode: 'HTML',
-            reply_markup: JSON.stringify({
-                inline_keyboard: [
-                    [{ text: '🇪🇸 ES  ➡  🇩🇪 DE', callback_data: 'switch' }],
-                    [{ text: '🇩🇪 DE  ➡  🇪🇸 ES', callback_data: 'switch' }]
-                ]
-            })
-
         });
     }
-    sendWordResponse(receivedData, msg) {
 
-        const data = this.parseData(receivedData)
+
+    sendWordResponse(receivedData, msg, direction) {
+
+        const data = this.parseData(receivedData, direction)
         console.log(` - Sending word response`)
 
         const fromLan = data.srcLang
-        const fromFlag = '🇪🇸'
+        const fromFlag = direction.srcFlag
 
         const toLan = data.dstLang
-        const toFlag = '🇩🇪'
+        const toFlag = direction.dstFlag
 
         const fromWord = data.srcWord
         const toWord = data.dstWord
@@ -211,15 +210,15 @@ module.exports = class {
         const fromSentence = data.srcSentence.replace(fromWord, this.hightlight(fromWord)) + '\n'
         const toSentence = data.dstSentence.replace(toWord, this.hightlight(toWord)) + '\n'
 
-        const introLine = 'Here the translation!\n'
+        const introLine = 'Here is the translation!\n'
 
-        const fromWordLine = `<b>${fromLan}</b> ${fromFlag}   ➡  ${fromWord}\n`
-        const toLine = `<b>${toLan}</b> ${toFlag}   ➡  ${toWord}\n`
+        const fromWordLine = `<b>${fromLan}</b> ${fromFlag} ${fromWord}\n`
+        const toLine = `<b>${toLan}</b> ${toFlag} ${toWord}\n`
 
-        const sentencesLine = 'And here a sentence:\n'
+        const sentencesLine = '\nAnd here a sentence:\n'
 
-        const fromSentenceLine = `<b>${fromLan}</b> ${fromFlag}   ➡  ${fromSentence}\n`
-        const toSentenceLine = `<b>${toLan}</b> ${toFlag}   ➡  ${toSentence}\n`
+        const fromSentenceLine = `<b>${fromLan}</b> ${fromFlag} ${fromSentence}\n`
+        const toSentenceLine = `<b>${toLan}</b> ${toFlag} ${toSentence}\n`
 
         const msgResponse = introLine + fromWordLine + toLine + sentencesLine + fromSentenceLine + toSentenceLine
         this.bot.sendMessage(msg.chat.id, msgResponse, { parse_mode: 'HTML' });
@@ -254,14 +253,14 @@ module.exports = class {
         )
     }
 
-    parseData(receivedData) {
+    parseData(receivedData, direction) {
         console.log(` - Parsing`)
 
         const parsedData = {
             srcLang: receivedData.src_lang,
             dstLang: receivedData.dst_lang,
-            srcFlag: this.direction.srcFlag,
-            dstFlag: this.direction.dstFlag,
+            srcFlag: direction.srcFlag,
+            dstFlag: direction.dstFlag,
             srcWord: receivedData.query,
             dstWord: receivedData.exact_matches[0].translations[0].text,
             srcSentence: receivedData.real_examples[0].src,
@@ -271,12 +270,22 @@ module.exports = class {
         return parsedData
     }
 
-    hightlight(word) { return `<b> ${word} </b>` }
+    getCompleteDirection(dir) {
+        const toEs = dir === 'es'
+        return {
+            dst: toEs ? 'es' : 'de',
+            dstFlag: toEs ? '🇪🇸' : '🇩🇪',
+            src: toEs ? 'de' : 'es',
+            srcFlag: toEs ? '🇩🇪' : '🇪🇸'
+        }
+    }
+
+    hightlight(word) { return `<b>${word}</b>` }
     hightlightInSentence(sentence, word) {
         return sentence.replace(word.toLowerCase(), foundWord => `<b> ${foundWord} </b>`)
     }
     broadcastWord(word) {
-        this.redisClient.getAllActiveChatId()
+        this.redisClient.getActiveUsers()
             .then(chat_ids => {
                 chat_ids.forEach(chat_id =>
                     this.sendWordMessage(word, chat_id)
