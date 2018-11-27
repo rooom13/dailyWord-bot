@@ -147,7 +147,7 @@ module.exports = class {
     sendStartResponse(msg) {
 
         const startMsg =
-            `Hello ${msg.from.first_name}!\n${this.availableCommands}
+            `Hello ${msg.chat.first_name}!\n${this.availableCommands}
         `
         this.bot.sendMessage(msg.chat.id, startMsg, {
             parse_mode: 'HTML', reply_markup: JSON.stringify({
@@ -301,7 +301,7 @@ module.exports = class {
 
     hightlight(word) { return `<b>${word}</b>` }
     hightlightInSentence(sentence, word) {
-        return sentence.replace(word.toLowerCase(), foundWord => `<b> ${foundWord} </b>`)
+        return sentence.replace(word.toLowerCase(), foundWord => `<b>${foundWord}</b>`)
     }
     broadcastWord(word) {
         this.redisClient.getActiveUsers()
@@ -319,5 +319,4 @@ module.exports = class {
         const wordMsg = `🇩🇪 ${word.de}\n🇪🇸 ${word.es}${examplesMsg}`
         this.bot.sendMessage(chat_id, wordMsg, { parse_mode: 'HTML' });
     }
-
 }
