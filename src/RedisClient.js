@@ -20,7 +20,6 @@ module.exports = class {
 
     async getUsers() {
 
-
         return new Promise(resolve => {
             this.client.smembers('users', (err, res) => {
                 resolve(res)
@@ -78,15 +77,12 @@ module.exports = class {
             if (err) console.log(err)
         });
         this.client.hset([`userInfo:${chatId}`, 'isActive', '0'])
-
-
     }
 
     async getUserDir(chatId) {
         return new Promise(resolve => {
             this.client.hget([`userInfo:${chatId}`, 'dir'], (err, dir) => resolve(dir))
         })
-
     }
 
     async switchLanguage(chatId) {

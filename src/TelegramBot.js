@@ -41,11 +41,19 @@ module.exports = class {
                 case '/users':
                     this.onUsersReceived(msg)
                     break
-                default:
-                    this.onWordReceived(msg)
-                    break
             }
         });
+
+        //broadcast
+        this.bot.onText(/^\/broadcast (.|\n)+/g, msg => {
+            this.onBroadcastReceived(msg)
+        })
+
+        // any word
+        this.bot.onText(/^\w+/g, msg => {
+            this.onWordReceived(msg)
+        })
+
         this.bot.on('callback_query', (data) => {
             switch (data.data) {
                 case 'switch':
@@ -90,30 +98,41 @@ module.exports = class {
         this.sendHelpResponse(msg)
     }
     onSwitchReceived(msg) {
+
         this.switchLanguage(msg.chat.id).then(dir => this.sendSwitchResponse(msg, dir))
 
     }
 
     onUsersReceived(msg) {
 
-        if (msg.chat.id === ADMIN_CHAT_ID) {
+        if (msg.chat.id == ADMIN_CHAT_ID) {
             this.redisClient.getUsersInfo().then(users =>
                 this.sendUsersResponse(msg, users)
             )
         } else {
+            this.sendNoAdminResponse(msg)
+        }
+    }
+
+    onBroadcastReceived(msg){
+        if (msg.chat.id == ADMIN_CHAT_ID) {
+            this.redisClient.getUsers()
+                .then(chat_ids => {
+                    chat_ids.forEach(chat_id =>
+                        this.bot.sendMessage(chat_id, msg.text.toString().replace('/broadcast ', ''), { parse_mode: 'HTML' })
+                    )
+                })
+
+        } else {
+            this.sendNoAdminResponse(msg)
 
         }
-
     }
 
 
 
     switchLanguage(chatId) {
-
         return new Promise((resolve, rejec) => this.redisClient.switchLanguage(chatId).then(dir => resolve(dir)))
-
-
-
     }
 
     // SEND RESPONSE
@@ -186,7 +205,7 @@ module.exports = class {
     }
 
     sendNoAdminResponse(msg) {
-        let usersMsg = 'Loitering around my github?\n Do not hesitate to greet me! 😀'
+        let usersMsg = `Loitering around my github?\nDon't hesitate to greet me! 😀`
         this.bot.sendMessage(msg.chat.id, usersMsg, {
             parse_mode: 'HTML',
         });
