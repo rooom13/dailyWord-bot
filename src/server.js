@@ -27,6 +27,8 @@ const getAndSendWord = () => {
 
 
 
+
+
 var CronJob = require('cron').CronJob;
 new CronJob('30 10,18,20 * * 0-6', function () {
     console.log(`Word broadcast sent at ${new Date().toString()}`);

@@ -114,7 +114,7 @@ module.exports = class {
         }
     }
 
-    onBroadcastReceived(msg){
+    onBroadcastReceived(msg) {
         if (msg.chat.id == ADMIN_CHAT_ID) {
             this.redisClient.getUsers()
                 .then(chat_ids => {
@@ -196,8 +196,8 @@ module.exports = class {
     }
 
     sendUsersResponse(msg, users) {
-        let usersMsg = 'Users list\n'
-        users.forEach(user => usersMsg += ` - ${user.chatId} ${user.isActive ? '😀' : '😴'}\n   name: ${user.name}\n   dir: ${user.dir === 'es' ? '🇪🇸' : '🇩🇪'}\n`)
+        let usersMsg = `Users (${users.length}) :\n`
+        users.forEach(user => usersMsg += ` - ${user.chatId} ${user.name} ${user.isActive ? '😀' : '😴'}  ${user.dir === 'es' ? '🇪🇸' : '🇩🇪'}\n`)
 
         this.bot.sendMessage(msg.chat.id, usersMsg, {
             parse_mode: 'HTML',
@@ -300,8 +300,11 @@ module.exports = class {
     }
 
     hightlight(word) { return `<b>${word}</b>` }
-    hightlightInSentence(sentence, word) {
-        return sentence.replace(word.toLowerCase(), foundWord => `<b>${foundWord}</b>`)
+    hightlightInSentence(sentence) {
+
+        //Markup
+        return sentence.replace(/\*\*(.*?)\*\*/g,
+            (w) => '<b>' + w.substring(2, w.length - 2)  + '</b>')
     }
     broadcastWord(word) {
         this.redisClient.getActiveUsers()
@@ -315,7 +318,7 @@ module.exports = class {
     sendWordMessage(word, chat_id) {
         console.log(` - Sending word broadcast response`)
         let examplesMsg = ''
-        word.examples.forEach(example => examplesMsg += `\n\n🇩🇪 ${this.hightlightInSentence(example.de, word.de[0])}\n🇪🇸 ${this.hightlightInSentence(example.es, word.es[0])}`)
+        word.examples.forEach(example => examplesMsg += `\n\n🇩🇪 ${this.hightlightInSentence(example.de)}\n🇪🇸 ${this.hightlightInSentence(example.es)}`)
         const wordMsg = `🇩🇪 ${word.de}\n🇪🇸 ${word.es}${examplesMsg}`
         this.bot.sendMessage(chat_id, wordMsg, { parse_mode: 'HTML' });
     }

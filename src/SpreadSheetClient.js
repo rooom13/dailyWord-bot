@@ -17,9 +17,9 @@ module.exports = class {
       return new Promise(resolve => {
         setTimeout(() => {
           resolve({
-            de: 'Kartoffel',
-            es: 'Patata',
-            examples: [{ de: 'Die Kartoffel ist lecker', es: 'La patata es deliciosa' }, { de: 'Die Kartoffel ist kaput', es: 'La patata está rota' }]
+            de: ['Kartoffel'],
+            es: ['Patata'],
+            examples: [{ de: 'Die **Kartoffel** ist lecker', es: 'La **patata** es deliciosa' }, { de: 'Die **Kartoffel** ist kaput', es: 'La **patata** está rota' }]
           })
         }, 0)
       });

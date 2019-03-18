@@ -28,12 +28,17 @@ module.exports = class {
     }
 
     async getUserInfo(chatId) {
-
         return new Promise(resolve => {
             this.client.hgetall([`userInfo:${chatId}`], (err, res) => {
-                res.isActive = res.isActive === '1'
-                res.chatId = chatId
-                resolve(res)
+                if (res) {
+                    res.isActive = res.isActive === '1'
+                    res.chatId = chatId
+                    resolve(res)
+                } else {
+                    resolve({ isActive: false, chatId: -1 })
+                }
+
+
             })
         })
     }
