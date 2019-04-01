@@ -10,8 +10,8 @@ services:
         - /data/redis:/data
   server:
     build: ./src
-    image: rooom13:detuschlerne_bot
-    container_name: detuschlerne_bot
+    image: rooom13:deutschlerne_bot
+    container_name: deutschlerne_bot
     links: 
       - redis
     depends_on:
