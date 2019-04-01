@@ -300,11 +300,22 @@ module.exports = class {
     }
 
     hightlight(word) { return `<b>${word}</b>` }
-    hightlightInSentence(sentence) {
+    autoHighlight(terms, ex) {
+        let termsWithoutArticles = []
+        let highlighted = ex
+
+        terms.forEach(w => termsWithoutArticles.push(w.replace(/die |das |der |el |la /g, '')))
+
+        termsWithoutArticles.forEach(t => highlighted = highlighted.replace(t, wordFinded => `${this.hightlight(wordFinded)}`))
+        return highlighted
+
+    }
+    markupHighlight(sentence) { return sentence.replace(/\*\*(.*?)\*\*/g, (w) => '<b>' + w.substring(2, w.length - 2) + '</b>') }
+    hightlightInSentence(word, sentence) {
+        return this.autoHighlight(word, sentence)
 
         //Markup
-        return sentence.replace(/\*\*(.*?)\*\*/g,
-            (w) => '<b>' + w.substring(2, w.length - 2)  + '</b>')
+        // return this.markupHighlight(sentence)
     }
     broadcastWord(word) {
         this.redisClient.getActiveUsers()
@@ -316,9 +327,10 @@ module.exports = class {
     }
 
     sendWordMessage(word, chat_id) {
+
         console.log(` - Sending word broadcast response`)
         let examplesMsg = ''
-        word.examples.forEach(example => examplesMsg += `\n\n🇩🇪 ${this.hightlightInSentence(example.de)}\n🇪🇸 ${this.hightlightInSentence(example.es)}`)
+        word.examples.forEach(example => examplesMsg += `\n\n🇩🇪 ${this.hightlightInSentence(word.de, example.de)}\n🇪🇸 ${this.hightlightInSentence(word.es, example.es)}`)
         const wordMsg = `🇩🇪 ${word.de}\n🇪🇸 ${word.es}${examplesMsg}`
         this.bot.sendMessage(chat_id, wordMsg, { parse_mode: 'HTML' });
     }
