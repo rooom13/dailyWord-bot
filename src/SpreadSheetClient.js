@@ -31,8 +31,8 @@ module.exports = class {
 
     const info = await promisify(this.doc.getInfo)()
     const sheet = info.worksheets[0]
-    const wordCount = sheet.rowCount
-    const rndIndex = Math.floor(Math.random() * (wordCount - 2)) + 2
+    const wordCount = sheet.rowCount -2
+    const rndIndex = Math.floor(Math.random() * (wordCount)) + 2 + 1
     const cells = await promisify(sheet.getCells)({
       range: `B${rndIndex}:K${rndIndex}`,
       'return-empty': true,
