@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[scripts]
+start = "python -m daily_word_bot"
+
+[packages]
+python-telegram-bot = "*"
+redis = "*"
+
+[dev-packages]
+pytest = "*"
+
+[requires]
+python_version = "3.8"

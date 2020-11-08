@@ -1,4 +1,6 @@
 ## @dailyWordBot
+This is the old version of the bot written in node. I changed it to py to ease the collaboration.
+
 **@dailyWordBot** is a Telegram Bot to help Spanish speakers learn German &amp; vice-versa developed using Node.js and Redis.
 
 This bot will send to you random words with sentence examples in both german and spanish in order to learn new vocabulary.
