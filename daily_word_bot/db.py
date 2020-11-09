@@ -7,8 +7,7 @@ from telegram import Message
 
 class DAO:
 
-    def __init__(self):
-        host: str = "localhost"
+    def __init__(self, host: str):
         port: int = 6379
         self.r: redis.Redis = redis.Redis(host=host, port=port)
 
@@ -42,15 +41,33 @@ class DAO:
         return json.loads(user_info)
 
     def get_all_user_ids(self) -> typing.List[str]:
-        return [chat_id.decode("utf-8") for chat_id in self.r.smembers("users")]
+        return to_string_list(self.r.smembers("users"))
 
     def get_all_users(self) -> typing.Iterator[dict]:
         chat_ids = self.get_all_user_ids()
         for chat_id in chat_ids:
             yield dict(self.get_user(chat_id), chatId=chat_id)
 
-    def get_all_active_users(self) -> typing.Iterator[dict]:
+    def get_all_active_users(self) -> typing.List[dict]:
         users = self.get_all_users()
 
         def is_active(x): return x["isActive"]
-        return filter(is_active, users)
+        return list(filter(is_active, users))
+
+    def save_user_blocked_word(self, message, word_id):
+        chat_id: str = message.chat.id
+        self.r.sadd(f"blockedWords-{chat_id}", word_id)
+
+    def remove_user_blocked_word(self, message, word_id):
+        chat_id: str = message.chat.id
+        self.r.srem(f"blockedWords-{chat_id}", word_id)
+
+    def get_user_blocked_words(self, chat_id) -> typing.List[str]:
+        return to_string_list(self.r.smembers(f"blockedWords-{chat_id}"))
+
+
+TypeSmembers = typing.Set[typing.Union[bytes, float, int, str]]
+
+
+def to_string_list(l: TypeSmembers) -> typing.List[str]:
+    return [i.decode("utf-8") for i in l]

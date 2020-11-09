@@ -1,4 +1,12 @@
-.env
-
+# IDE
 .mypy_cache
 .pytest_cache
+
+# credentials
+.env
+service-account.json
+
+
+# exclude everything
+resources/*
+!resources/.gitkeep 

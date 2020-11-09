@@ -7,7 +7,7 @@ from daily_word_bot.db import DAO
 
 tc = unittest.TestCase()
 
-chat_id = "1233"
+chat_id = "123"
 test_user_info = dict(
     name="Pepe",
     isActive=True
@@ -33,7 +33,14 @@ def test_save_user():
 
 def test_get_all_users():
     dao.save_user(message)
-    users = dao.get_all_users()
+    users = list(dao.get_all_users())
 
-    tc.assertIn(test_user_info, users)
+    tc.assertIn(dict(test_user_info, chatId=chat_id), users)
+    dao._drop_db()
+
+
+def test_get_user_bocked_words():
+    dao.save_user_blocked_word(message, "wid0")
+    blocked_words = dao.get_user_blocked_words(chat_id)
+    print(blocked_words)
     dao._drop_db()

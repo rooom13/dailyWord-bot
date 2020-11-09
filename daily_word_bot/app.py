@@ -7,6 +7,7 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, Callback
 from daily_word_bot.config import config
 from daily_word_bot import utils
 from daily_word_bot.db import DAO
+from daily_word_bot.word_bank import WordBank
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
@@ -14,7 +15,9 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-dao = DAO()
+dao = DAO(config.REDIS_HOST)
+word_bank = WordBank()
+
 
 available_commands = (
     "Available commands:"
@@ -70,61 +73,77 @@ def on_stop_callback(update: Update, context: CallbackContext, is_inline_keyboar
         update.message.reply_text(msg, reply_markup=reply_markup)
 
 
+def on_blockword_callback(update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:
+    message = update.message or update.callback_query.message
+    dao.set_user_inactive(message)
+
+    msg = "You will no longer receive words!\n...Unles you use /start"
+    reply_markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton("/start", callback_data='/start')]
+    ])
+
+    if is_inline_keyboard:
+        update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
+    else:
+        update.message.reply_text(msg, reply_markup=reply_markup)
+
+
 def inline_keyboard_callbacks(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
 
-    callback_data = query.data
-    if callback_data == "/start":
-        on_start_callback(update, context, is_inline_keyboard=True)
-    elif callback_data == "/stop":
-        on_stop_callback(update, context, is_inline_keyboard=True)
+    callback_data = query.data.split(" ")
 
-
-def build_word_msg(word_data: dict) -> str:
-
-    examples: list = (word_data.get("examples") or [])
-    word_de = word_data.get("de", "")
-    word_es = word_data.get("es", "")
-
-    examples_str: str = ("\n".join([(
-        f"\n🇩🇪 {utils.highlight_in_sentence(ex.get('de', ''), word_de)}"
-        f"\n🇪🇸 {utils.highlight_in_sentence(ex.get('es', ''), word_es)}"
-    ) for ex in examples]))
-
-    return (
-        f"\n🇩🇪 {word_de}"
-        f"\n🇪🇸 {word_es}"
-        f"\n{examples_str}"
-    )
+    if len(callback_data) == 1:
+        if callback_data == "/start":
+            on_start_callback(update, context, is_inline_keyboard=True)
+        elif callback_data == "/stop":
+            on_stop_callback(update, context, is_inline_keyboard=True)
+    elif len(callback_data) == 2:
+        command: str = callback_data[0]
+        word_id: str = callback_data[1]
+        if command == "/blockword":
+            dao.save_user_blocked_word(update.callback_query.message, word_id)
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("Zurücknehmen - Deshacer", callback_data=f"/unblockword {word_id}")]
+            ])
+            msg = "✅\n" + update.callback_query.message.text
+            update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
+        elif command == "/unblockword":
+            dao.remove_user_blocked_word(update.callback_query.message, word_id)
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("Gelernt! - Aprendida!", callback_data=f"/blockword {word_id}")]
+            ])
+            msg = update.callback_query.message.text[2:]
+            update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
 
 
 def send_word(context: CallbackContext):
 
-    word_data: dict = {
-        "de": "zittern",
-        "es": "tiritar/temblar",
-        "examples": [
-            {
-                "de": "Vor Kälte zu zittern",
-                "es": "Temblar de frío"
-            },
-            {
-                "de": "Vor Angst zu zittern",
-                "es": "Tiritar de miedo"
-            }
-        ]
-    }
+    users = dao.get_all_active_users()
+    logger.info(f"sending words to {len(users)} users")
 
-    msg: str = build_word_msg(word_data)
+    for user in users:
+        try:
+            chat_id = user["chatId"]
+            exclude = dao.get_user_blocked_words(chat_id)
+            word_data = word_bank.get_random(exclude=exclude)
 
-    chat_ids = dao.get_all_user_ids()
-    for chat_id in chat_ids:
-        context.bot.send_message(chat_id=chat_id, text=msg, parse_mode='HTML')
+            msg: str = utils.build_word_msg(word_data)
+
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("Gelernt! - Aprendida!", callback_data=f"/blockword {word_data['word_id']}")]
+            ])
+
+            context.bot.send_message(chat_id=chat_id, text=msg, parse_mode='HTML', reply_markup=reply_markup)
+        except Exception as e:
+            logger.error("shit", exc_info=e)
 
 
 def run():
     """Run bot"""
+    logger.info("Started app") 
+    logger.info(f"word_bank {word_bank.last_updated_at}")
 
     updater = Updater(config.BOT_TOKEN)
 
@@ -132,8 +151,8 @@ def run():
         trigger="cron",
         day="*",
         hour="10,18,20",
-        minute=30,
-        # second="10,20,30,40,50,0" # test
+        minute="30",
+        #second="10,20,30,40,50,0"  # test
     ))
 
     dispatcher = updater.dispatcher
@@ -146,3 +165,4 @@ def run():
 
     updater.start_polling()
     updater.idle()
+

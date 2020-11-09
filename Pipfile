@@ -5,10 +5,14 @@ name = "pypi"
 
 [scripts]
 start = "python -m daily_word_bot"
+tests = "pytest tests -s"
 
 [packages]
 python-telegram-bot = "*"
 redis = "*"
+oauth2client = "*"
+gspread = "*"
+pandas = "*"
 
 [dev-packages]
 pytest = "*"
