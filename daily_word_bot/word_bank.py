@@ -10,7 +10,6 @@ from gspread import Spreadsheet, Worksheet
 
 class WordBank:
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    credentials: ServiceAccountCredentials = ServiceAccountCredentials.from_json_keyfile_name('service-account.json', scope)
 
     spreadsheet_name: str = "Must learn Deutsch Worten"
     worksheet_name: str = "words"
@@ -25,10 +24,11 @@ class WordBank:
 
     def update(self) -> None:
         if self.local:
-            self. df = pd.read_csv("resources/word_bank.csv", sep=";").set_index("word_id").head(5)
+            self.df = pd.read_csv("resources/word_bank.csv", sep=";").set_index("word_id").head(5)
             return
         """Updates the df by fetching current Google Spreadsheets document"""
-        gc: gspread.client.Client = gspread.authorize(self.credentials)
+        credentials: ServiceAccountCredentials = ServiceAccountCredentials.from_json_keyfile_name('service-account.json', self.scope)
+        gc: gspread.client.Client = gspread.authorize(credentials)
         spreadsheet: Spreadsheet = gc.open(self.spreadsheet_name)
         worksheet: Worksheet = spreadsheet.worksheet(self.worksheet_name)
         data: list = worksheet.get_all_values()
@@ -43,7 +43,6 @@ class WordBank:
 
         self.df = pd.DataFrame(data, columns=header)[cols].set_index("word_id")
         self.last_updated_at = str(datetime.now())
-        print(f"Updated word_bank at {self.last_updated_at}")
 
     def get_random(self, exclude: list = []) -> dict:
         if len(exclude) >= len(self.df.index):

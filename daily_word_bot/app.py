@@ -16,7 +16,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 dao = DAO(config.REDIS_HOST)
-word_bank = WordBank()
+word_bank = WordBank(config.WORD_BANK_LOCAL)
 
 
 available_commands = (
@@ -41,6 +41,11 @@ def on_users_callback(update: Update, context: CallbackContext) -> None:
     else:
         msg = "Loitering around my github?\nDon't hesitate greeting me! 😀"
         update.message.reply_text(msg)
+
+
+def on_wordbankinfo_callback(update: Update, context: CallbackContext) -> None:
+    msg = f"Word bank info:\n - {len(word_bank.df.index)} words, last updated on {word_bank.last_updated_at}"
+    update.message.reply_text(msg)
 
 
 def on_start_callback(update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:
@@ -142,17 +147,16 @@ def send_word(context: CallbackContext):
 
 def run():
     """Run bot"""
-    logger.info("Started app") 
-    logger.info(f"word_bank {word_bank.last_updated_at}")
+    logger.info("Started app")
 
     updater = Updater(config.BOT_TOKEN)
 
     updater.job_queue.run_custom(send_word, job_kwargs=dict(
         trigger="cron",
         day="*",
-        hour="10,18,20",
-        minute="30",
-        #second="10,20,30,40,50,0"  # test
+        # hour="10,18,20",
+        # minute="30",
+        second="10,20,30,40,50,0"  # test
     ))
 
     dispatcher = updater.dispatcher
@@ -161,8 +165,8 @@ def run():
     dispatcher.add_handler(CommandHandler("stop", on_stop_callback))
     dispatcher.add_handler(CommandHandler("help", on_help_callback))
     dispatcher.add_handler(CommandHandler("users", on_users_callback))
+    dispatcher.add_handler(CommandHandler("wordbankinfo", on_wordbankinfo_callback))
     dispatcher.add_handler(CallbackQueryHandler(inline_keyboard_callbacks))
 
     updater.start_polling()
     updater.idle()
-

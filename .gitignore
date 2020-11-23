@@ -10,3 +10,6 @@ service-account.json
 # exclude everything
 resources/*
 !resources/.gitkeep 
+
+reports/*
+.coverage

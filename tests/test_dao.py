@@ -3,6 +3,7 @@ import pytest
 
 from telegram import Message, Chat
 
+from daily_word_bot.config import config
 from daily_word_bot.db import DAO
 
 tc = unittest.TestCase()
@@ -12,7 +13,7 @@ test_user_info = dict(
     name="Pepe",
     isActive=True
 )
-dao = DAO()
+dao = DAO(config.REDIS_HOST)
 
 message = Message(message_id=123456789, date="",
                   chat=Chat(
@@ -42,5 +43,4 @@ def test_get_all_users():
 def test_get_user_bocked_words():
     dao.save_user_blocked_word(message, "wid0")
     blocked_words = dao.get_user_blocked_words(chat_id)
-    print(blocked_words)
     dao._drop_db()
