@@ -1,5 +1,5 @@
 import unittest
-import pytest
+import fakeredis
 
 from telegram import Message, Chat
 
@@ -14,7 +14,7 @@ test_user_info = dict(
     isActive=True
 )
 dao = DAO(config.REDIS_HOST)
-
+dao.r = fakeredis.FakeStrictRedis()
 message = Message(message_id=123456789, date="",
                   chat=Chat(
                       id=chat_id,
@@ -29,18 +29,33 @@ def test_save_user():
 
     tc.assertDictEqual(test_user_info, user_info)
     tc.assertIn(chat_id, active_users)
-    dao._drop_db()
+    dao.r.flushall()
 
 
 def test_get_all_users():
     dao.save_user(message)
     users = list(dao.get_all_users())
-
     tc.assertIn(dict(test_user_info, chatId=chat_id), users)
-    dao._drop_db()
+    dao.r.flushall()
 
 
-def test_get_user_bocked_words():
+def test_set_user_inactive():
+    dao.save_user(message)
+    active_users = dao.get_all_active_users()
+    tc.assertIn(dict(test_user_info, chatId=chat_id), active_users)
+
+    dao.set_user_inactive(message)
+    active_users = dao.get_all_active_users()
+    tc.assertEqual([], active_users)
+
+
+def test_set_get_remove_user_bocked_words():
     dao.save_user_blocked_word(message, "wid0")
     blocked_words = dao.get_user_blocked_words(chat_id)
-    dao._drop_db()
+    tc.assertEqual(blocked_words, ["wid0"])
+
+    dao.remove_user_blocked_word(message, "wid0")
+    blocked_words = dao.get_user_blocked_words(chat_id)
+    tc.assertEqual(blocked_words, [])
+
+    dao.r.flushall()

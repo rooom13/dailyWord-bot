@@ -11,10 +11,6 @@ class DAO:
         port: int = 6379
         self.r: redis.Redis = redis.Redis(host=host, port=port)
 
-    def _drop_db(self):
-        """Destructive action. This deletes all data"""
-        self.r.flushall()
-
     def save_user(self, message: Message):
         chat_id: str = message.chat.id
         name: str = message.chat.first_name

@@ -17,14 +17,14 @@ class WordBank:
     df: pd.DataFrame = None
     last_updated_at = None
 
-    def __init__(self, local: bool = False):
+    def __init__(self, local: bool = False, local_path: typing.Union[str] = "resources/word_bank.csv"):
         self.local = local
+        self.local_path = local_path
         self.update()
-        pass
 
     def update(self) -> None:
         if self.local:
-            self.df = pd.read_csv("resources/word_bank.csv", sep=";").set_index("word_id").head(5)
+            self.df = pd.read_csv(self.local_path, sep=";").set_index("word_id").head(5)
             return
         """Updates the df by fetching current Google Spreadsheets document"""
         credentials: ServiceAccountCredentials = ServiceAccountCredentials.from_json_keyfile_name('service-account.json', self.scope)

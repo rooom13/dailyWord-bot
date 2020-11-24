@@ -8,15 +8,21 @@ def highlight(w: str) -> str:
     return f"<b>{w}</b>"
 
 
-def highlight_in_sentence(s: str, terms: str) -> str:
+def get_terms_without_articles(terms: str) -> typing.List[str]:
     # quitar artculos
-    regex = r"/die |das |der |el |la /g"
+    regex = r"die |das |der |el |la "
     terms_without_articles: typing.List[str] = [re.sub(regex, "", t, flags=re.IGNORECASE) for t in terms.split("/")]
+    return terms_without_articles
+
+
+def highlight_in_sentence(s: str, terms: str) -> str:
 
     # highlight terms
+    terms_without_articles = get_terms_without_articles(terms)
     for t in terms_without_articles:
         s = re.sub(f"({t})", r"<b>\1</b>", s, flags=re.IGNORECASE)
     return s
+
 
 def build_word_msg(word_data: dict) -> str:
 

@@ -5,7 +5,7 @@ name = "pypi"
 
 [scripts]
 start = "python -m daily_word_bot"
-tests = "pytest tests --cov-report html:reports/coverage --cov=daily_word_bot/ --cov-fail-under=40 --junitxml=reports/tests/report.xml --flake8 --cache-clear"
+tests = "pytest tests --cov-report html:reports/coverage --cov=daily_word_bot/ --cov-fail-under=60 --junitxml=reports/tests/report.xml --flake8 --cache-clear"
 
 [packages]
 python-telegram-bot = "*"
@@ -18,6 +18,7 @@ pandas = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-flake8 = "*"
+fakeredis = "*"
 
 [requires]
 python_version = "3.8"

@@ -154,9 +154,15 @@ def run():
     updater.job_queue.run_custom(send_word, job_kwargs=dict(
         trigger="cron",
         day="*",
-        # hour="10,18,20",
-        # minute="30",
-        second="10,20,30,40,50,0"  # test
+        hour="10,18,20",
+        minute="30",
+        # second="10,20,30,40,50,0"  # test
+    ))
+    updater.job_queue.run_custom(lambda x: word_bank.update(), job_kwargs=dict(
+        trigger="cron",
+        day="*",
+        hour="7",
+        # second="10,20,30,40,50,0"  # test
     ))
 
     dispatcher = updater.dispatcher
