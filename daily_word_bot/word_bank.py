@@ -23,25 +23,27 @@ class WordBank:
         self.update()
 
     def update(self) -> None:
-        if self.local:
-            self.df = pd.read_csv(self.local_path, sep=";").set_index("word_id").head(5)
-            return
         """Updates the df by fetching current Google Spreadsheets document"""
-        credentials: ServiceAccountCredentials = ServiceAccountCredentials.from_json_keyfile_name('service-account.json', self.scope)
-        gc: gspread.client.Client = gspread.authorize(credentials)
-        spreadsheet: Spreadsheet = gc.open(self.spreadsheet_name)
-        worksheet: Worksheet = spreadsheet.worksheet(self.worksheet_name)
-        data: list = worksheet.get_all_values()
 
-        data.pop(0)  # discard explanation row
-        header = data.pop(0)
-        df: pd.DataFrame = pd.DataFrame(data, columns=header)
+        if self.local:
+            df = pd.read_csv(self.local_path, sep=";").set_index("word_id").head(5)
+        else:  # pragma: no cover
+            credentials: ServiceAccountCredentials = ServiceAccountCredentials.from_json_keyfile_name('service-account.json', self.scope)
+            gc: gspread.client.Client = gspread.authorize(credentials)
+            spreadsheet: Spreadsheet = gc.open(self.spreadsheet_name)
+            worksheet: Worksheet = spreadsheet.worksheet(self.worksheet_name)
+            data: list = worksheet.get_all_values()
 
-        cols_de = df.columns[df.columns.str.startswith("Deutsch")].to_list()
-        cols_es = df.columns[df.columns.str.startswith("Spanisch")].to_list()
-        cols = ["word_id"] + cols_de + cols_es
+            data.pop(0)  # discard explanation row
+            header = data.pop(0)
+            df = pd.DataFrame(data, columns=header)
 
-        self.df = pd.DataFrame(data, columns=header)[cols].set_index("word_id")
+            cols_de = df.columns[df.columns.str.startswith("Deutsch")].to_list()
+            cols_es = df.columns[df.columns.str.startswith("Spanisch")].to_list()
+            cols = ["word_id"] + cols_de + cols_es
+
+            df = pd.DataFrame(data, columns=header)[cols].set_index("word_id")
+        self.df = df
         self.last_updated_at = str(datetime.now())
 
     def get_random(self, exclude: list = []) -> dict:

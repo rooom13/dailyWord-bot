@@ -1,5 +1,6 @@
 import re
 import typing
+from telegram import BotCommand
 
 from daily_word_bot import utils
 
@@ -40,3 +41,17 @@ def build_word_msg(word_data: dict) -> str:
         f"\n🇪🇸 {word_es}"
         f"\n{examples_str}"
     )
+
+
+def build_available_commands_msg(bot_commands: typing.List[BotCommand]) -> str:
+    commands_str = "\n".join([f"{c.command} ➜ {c.description}" for c in bot_commands])
+    return (
+        "Available commands:\n" +
+        commands_str
+    )
+
+
+def build_users_msg(users: typing.List[dict]) -> str:
+    users_str = "\n".join(f'- {u.get("chatId")} {u.get("name")} {"😀" if u.get("isActive")  else  "😴"}' for u in users)
+    msg = f"Users: ({len(users)})\n{users_str}"
+    return msg
