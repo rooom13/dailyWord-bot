@@ -1,7 +1,7 @@
+import typing
 import logging
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot
-
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot, BotCommand
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 
 from daily_word_bot.config import config
@@ -15,44 +15,42 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-dao = DAO(config.REDIS_HOST)
-word_bank = WordBank(config.WORD_BANK_LOCAL)
+dao: typing.Union[DAO, None] = None
+word_bank: typing.Union[WordBank, None] = None
 
 
-available_commands = (
-    "Available commands:"
-    "\n· /help   ➡ Opens this help section"
-    "\n· /stop   ➡ Stops me sending words"
-    "\n· /start  ➡ Makes me start sending words"
-)
+user_bot_commands = [
+    BotCommand("/help", "Opens help section"),
+    BotCommand("/start", "Starts sending words"),
+    BotCommand("/stop", "Stops sending words"),
+]
+
+available_commands_msg = utils.build_available_commands_msg(user_bot_commands)
 
 
-def on_help_callback(update: Update, context: CallbackContext) -> None:
-    msg = available_commands
+def on_help_callback(update: Update, context: CallbackContext) -> None:  # pragma: no cover
+    update.message.reply_text(available_commands_msg)
+
+
+def on_users_callback(update: Update, context: CallbackContext) -> None:  # pragma: no cover
+    if str(update.message.chat_id) == config.ADMIN_CHAT_ID:
+        users = list(dao.get_all_users())
+        msg = utils.build_users_msg(users)
+    else:
+        msg = "Loitering around my github?\nDon't hesitate greeting me! 😀"
     update.message.reply_text(msg)
 
 
-def on_users_callback(update: Update, context: CallbackContext) -> None:
-    if str(update.message.chat_id) == config.ADMIN_CHAT_ID:
-        users = list(dao.get_all_users())
-        users_str = "\n".join(f'- {u.get("chatId")} {u.get("name")} {"😀" if u.get("isActive")  else  "😴"}' for u in users)
-        msg = f"Users: ({len(users)})\n{users_str}"
-        update.message.reply_text(msg)
-    else:
-        msg = "Loitering around my github?\nDon't hesitate greeting me! 😀"
-        update.message.reply_text(msg)
-
-
-def on_wordbankinfo_callback(update: Update, context: CallbackContext) -> None:
+def on_wordbankinfo_callback(update: Update, context: CallbackContext) -> None:  # pragma: no cover
     msg = f"Word bank info:\n - {len(word_bank.df.index)} words, last updated on {word_bank.last_updated_at}"
     update.message.reply_text(msg)
 
 
-def on_start_callback(update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:
+def on_start_callback(update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
     message = update.message or update.callback_query.message
     dao.save_user(message)
 
-    msg = f"Hello {message.chat.first_name}! " + available_commands
+    msg = f"Hello {message.chat.first_name}! " + available_commands_msg
     reply_markup = InlineKeyboardMarkup([
         [InlineKeyboardButton("/stop", callback_data='/stop')]
     ])
@@ -63,7 +61,7 @@ def on_start_callback(update: Update, context: CallbackContext, is_inline_keyboa
         update.message.reply_text(msg, reply_markup=reply_markup)
 
 
-def on_stop_callback(update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:
+def on_stop_callback(update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
     message = update.message or update.callback_query.message
     dao.set_user_inactive(message)
 
@@ -78,7 +76,7 @@ def on_stop_callback(update: Update, context: CallbackContext, is_inline_keyboar
         update.message.reply_text(msg, reply_markup=reply_markup)
 
 
-def on_blockword_callback(update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:
+def on_blockword_callback(update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
     message = update.message or update.callback_query.message
     dao.set_user_inactive(message)
 
@@ -93,7 +91,7 @@ def on_blockword_callback(update: Update, context: CallbackContext, is_inline_ke
         update.message.reply_text(msg, reply_markup=reply_markup)
 
 
-def inline_keyboard_callbacks(update: Update, context: CallbackContext) -> None:
+def inline_keyboard_callbacks(update: Update, context: CallbackContext) -> None:  # pragma: no cover
     query = update.callback_query
     query.answer()
 
@@ -119,12 +117,11 @@ def inline_keyboard_callbacks(update: Update, context: CallbackContext) -> None:
             reply_markup = InlineKeyboardMarkup([
                 [InlineKeyboardButton("Gelernt! - Aprendida!", callback_data=f"/blockword {word_id}")]
             ])
-            msg = update.callback_query.message.text[2:]
+            msg = update.callback_query.message.text[2:]  # remove '✅\n'
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
 
 
-def send_word(context: CallbackContext):
-
+def send_word(context: CallbackContext):  # pragma: no cover
     users = dao.get_all_active_users()
     logger.info(f"sending words to {len(users)} users")
 
@@ -145,11 +142,17 @@ def send_word(context: CallbackContext):
             logger.error("shit", exc_info=e)
 
 
-def run():
+def run():  # pragma: no cover
     """Run bot"""
     logger.info("Started app")
 
+    global dao, word_bank
+
+    dao = DAO(config.REDIS_HOST)
+    word_bank = WordBank(config.WORD_BANK_LOCAL)
+
     updater = Updater(config.BOT_TOKEN)
+    updater.bot.set_my_commands(user_bot_commands)
 
     updater.job_queue.run_custom(send_word, job_kwargs=dict(
         trigger="cron",

@@ -1,8 +1,8 @@
 import pytest
 import unittest
+from telegram import BotCommand
 
 from daily_word_bot import utils
-
 
 tc = unittest.TestCase()
 
@@ -60,3 +60,28 @@ def test_build_word_msg():
                    "\n"
                    "\n🇩🇪 Nein <b>pata</b> baila"
                    "\n🇪🇸 una <b>pata</b> baila")
+
+
+def test_build_available_commands_msg():
+    bot_commands = [
+        BotCommand("/command1", "Description1"),
+        BotCommand("/command2", "Description2"),
+        BotCommand("/command3", "Description3"),
+    ]
+
+    res = utils.build_available_commands_msg(bot_commands)
+    tc.assertEqual(res,
+                   "Available commands:"
+                   "\n/command1 ➜ Description1"
+                   "\n/command2 ➜ Description2"
+                   "\n/command3 ➜ Description3")
+
+
+def test_build_users_msg():
+    users = [{'name': 'romanito', 'isActive': True, 'chatId': 'aChatId'},
+             {'name': 'pinxulino', 'isActive': False, 'chatId': 'aChatId2'}]
+    res = utils.build_users_msg(users)
+    tc.assertEqual(res,
+                   "Users: (2)"
+                   "\n- aChatId romanito 😀"
+                   "\n- aChatId2 pinxulino 😴")
