@@ -9,7 +9,7 @@ The words data bank is updated dynamically with the will of collaborators via a 
 
 
 ## How can I start using it?
-Just open Telegram and start a conversation with **@dailyWord_bot**
+Just open Telegram and start a conversation with [**@dailyWord_bot**](https://telegram.me/dailyWord_bot)
 
 ### Tech Stack
 | What | Tech |
