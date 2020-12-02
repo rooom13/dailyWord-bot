@@ -17,5 +17,6 @@ Just open Telegram and start a conversation with **@dailyWord_bot**
 | development | python |
 | database | redis |
 | deployment | Docker, docker-compose |
+| CI | Github Actions to enforce merge checks for tests, static analysis & coverage |
 
 
