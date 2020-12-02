@@ -1,5 +1,5 @@
 # [@dailyWord_bot](https://telegram.me/dailyWord_bot) (Check it, it's live :globe_with_meridians:)
-This repository contains the source code for[**@dailyWord_bot**](https://telegram.me/dailyWord_bot), a Telegram Bot that eases learning new words & expressions in German and Spanish.
+This repository contains the source code for [**@dailyWord_bot**](https://telegram.me/dailyWord_bot), a Telegram Bot that eases learning new words & expressions in German and Spanish.
 ## What does @dailyWord_bot do?
 **@dailyWord_bot** will send you daily words with examples with a set of sentence examples. You can as well mark/unmark the words that you already know so they won't appear anymore.
 
