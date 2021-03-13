@@ -73,7 +73,6 @@ class WordBank:
     def get_words(self, word_ids: list) -> list:
         """Get the word_id, german word, spanish word given a word_id list"""
         words_df = self.df.loc[self.df.index.isin(word_ids)]
-        words_df.reset_index(level=0, inplace = True)
-        words = words_df[["word_id", "Deutsch","Spanisch"]].rename(columns={"Deutsch": "de", "Spanisch": "es" }).T.to_dict()
+        words_df.reset_index(level=0, inplace=True)
+        words = words_df[["word_id", "Deutsch", "Spanisch"]].rename(columns={"Deutsch": "de", "Spanisch": "es"}).T.to_dict()
         return [words[i] for i in words.keys()]
-

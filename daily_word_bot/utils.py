@@ -45,10 +45,7 @@ def build_word_msg(word_data: dict) -> str:
 
 def build_available_commands_msg(bot_commands: typing.List[BotCommand]) -> str:
     commands_str = "\n".join([f"{c.command} ➜ {c.description}" for c in bot_commands])
-    return (
-        "Available commands:\n" +
-        commands_str
-    )
+    return "Available commands:\n" + commands_str
 
 
 def build_users_msg(users: typing.List[dict]) -> str:
