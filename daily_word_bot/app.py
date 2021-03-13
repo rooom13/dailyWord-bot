@@ -99,31 +99,12 @@ def on_get_blockwords_callback(update: Update, context: CallbackContext, is_inli
 
     reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
     
-    msg = ""   
-    if len(inline_keyboard_buttons) == 0:
-        msg = msg + "You don't have any blocked words."
-    else:
-        msg = msg + "These are your blocked words. Click to unblock them."
-
+    msg = "These are your blocked words. Click to unblock them." if inline_keyboard_buttons else "You don't have any blocked words."
+   
     if is_inline_keyboard:
         update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
     else:
         update.message.reply_text(msg, reply_markup=reply_markup)
-
-
-# def on_blockword_callback(update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
-#     message = update.message or update.callback_query.message
-#     dao.set_user_inactive(message)
-
-#     msg = "You will no longer receive words!\n...Unles you use /start"
-#     reply_markup = InlineKeyboardMarkup([
-#         [InlineKeyboardButton("/start", callback_data='/start')]
-#     ])
-
-#     if is_inline_keyboard:
-#         update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
-#     else:
-#         update.message.reply_text(msg, reply_markup=reply_markup)
 
 
 def inline_keyboard_callbacks(update: Update, context: CallbackContext) -> None:  # pragma: no cover
