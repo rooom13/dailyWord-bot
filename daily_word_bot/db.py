@@ -47,7 +47,8 @@ class DAO:
     def get_all_active_users(self) -> typing.List[dict]:
         users = self.get_all_users()
 
-        def is_active(x): return x["isActive"]
+        def is_active(x):
+            return x["isActive"]
         return list(filter(is_active, users))
 
     def save_user_blocked_word(self, message, word_id):
@@ -65,5 +66,5 @@ class DAO:
 TypeSmembers = typing.Set[typing.Union[bytes, float, int, str]]
 
 
-def to_string_list(l: TypeSmembers) -> typing.List[str]:
-    return [i.decode("utf-8") for i in l]
+def to_string_list(li: TypeSmembers) -> typing.List[str]:
+    return [i.decode("utf-8") for i in li]

@@ -1,7 +1,7 @@
 import typing
 import logging
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot, BotCommand
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 
 from daily_word_bot.config import config
@@ -23,6 +23,7 @@ user_bot_commands = [
     BotCommand("/help", "Opens help section"),
     BotCommand("/start", "Starts sending words"),
     BotCommand("/stop", "Stops sending words"),
+    BotCommand("/blockedwords", "Shows your blocked words")
 ]
 
 available_commands_msg = utils.build_available_commands_msg(user_bot_commands)
@@ -76,14 +77,26 @@ def on_stop_callback(update: Update, context: CallbackContext, is_inline_keyboar
         update.message.reply_text(msg, reply_markup=reply_markup)
 
 
-def on_blockword_callback(update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
+def on_get_blockwords_callback(update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
     message = update.message or update.callback_query.message
-    dao.set_user_inactive(message)
 
-    msg = "You will no longer receive words!\n...Unles you use /start"
-    reply_markup = InlineKeyboardMarkup([
-        [InlineKeyboardButton("/start", callback_data='/start')]
-    ])
+    chat_id = message.chat_id
+
+    blocked_word_ids = dao.get_user_blocked_words(chat_id)
+    blocked_words = word_bank.get_words(blocked_word_ids)
+
+    inline_keyboard_buttons = []
+
+    for blocked_word in blocked_words:
+        word_id = blocked_word["word_id"]
+        german_word = blocked_word["de"]
+        spanish_word = blocked_word["es"]
+        spanish_and_german_word = "🇪🇸" + spanish_word + " | " + "🇩🇪" + german_word
+        inline_keyboard_buttons.append([InlineKeyboardButton(spanish_and_german_word, callback_data=f'/unblockword_from_blocked_words {word_id}')])
+
+    reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
+
+    msg = "These are your blocked words. Click to unblock them." if inline_keyboard_buttons else "You don't have any blocked words."
 
     if is_inline_keyboard:
         update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
@@ -119,6 +132,9 @@ def inline_keyboard_callbacks(update: Update, context: CallbackContext) -> None:
             ])
             msg = update.callback_query.message.text[2:]  # remove '✅\n'
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
+        elif command == "/unblockword_from_blocked_words":
+            dao.remove_user_blocked_word(update.callback_query.message, word_id)
+            on_get_blockwords_callback(update, context, is_inline_keyboard=True)
 
 
 def send_word(context: CallbackContext):  # pragma: no cover
@@ -175,6 +191,7 @@ def run():  # pragma: no cover
     dispatcher.add_handler(CommandHandler("help", on_help_callback))
     dispatcher.add_handler(CommandHandler("users", on_users_callback))
     dispatcher.add_handler(CommandHandler("wordbankinfo", on_wordbankinfo_callback))
+    dispatcher.add_handler(CommandHandler("blockedwords", on_get_blockwords_callback))
     dispatcher.add_handler(CallbackQueryHandler(inline_keyboard_callbacks))
 
     updater.start_polling()

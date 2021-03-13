@@ -23,4 +23,3 @@ test_config = Config(
 )
 
 config = live_config if (os.getenv("ENV") or "").lower() == "live" else test_config
-
