@@ -7,7 +7,7 @@ services:
     ports:
         - "6379:6379"
     volumes:
-        - /data/redis:/data
+        - /data/redis_daily_word_bot:/data
   daily_word_bot_app:
     build: .
     image: rooom13:deutschlerne_bot
@@ -19,7 +19,7 @@ services:
     depends_on:
       - "redis"
     volumes:
-        - /data/redis:/data
+        - /data/redis_daily_word_bot:/data
     ports:
       - "8443:8443"
     restart: always
