@@ -4,6 +4,7 @@
 
 # credentials
 .env
+*.pem
 service-account.json
 
 
@@ -13,3 +14,4 @@ resources/*
 
 reports/*
 .coverage
+*.rdb
