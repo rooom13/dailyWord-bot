@@ -6,6 +6,7 @@ Config = namedtuple("Config", [
     "ADMIN_CHAT_ID",
     "BOT_TOKEN",
     "REDIS_HOST",
+    "IS",
     "WORD_BANK_LOCAL",
     "VERSION",
 ])
@@ -22,7 +23,7 @@ test_config = Config(
     ADMIN_CHAT_ID=os.getenv("ADMIN_CHAT_ID"),
     BOT_TOKEN=os.getenv("TEST_BOT_TOKEN"),
     REDIS_HOST="localhost",
-    WORD_BANK_LOCAL=strtobool(os.getenv("WORD_BANK_LOCAL") or "false"),
+    WORD_BANK_LOCAL=strtobool(os.getenv("WORD_BANK_LOCAL") or "true"),
     VERSION="aVersion"
 )
 
