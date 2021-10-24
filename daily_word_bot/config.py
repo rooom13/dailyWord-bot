@@ -6,7 +6,6 @@ Config = namedtuple("Config", [
     "ADMIN_CHAT_ID",
     "BOT_TOKEN",
     "REDIS_HOST",
-    "IS",
     "WORD_BANK_LOCAL",
     "VERSION",
 ])
