@@ -13,12 +13,14 @@ redis = "*"
 oauth2client = "*"
 gspread = "*"
 pandas = "*"
+pydrive = "*"
 
 [dev-packages]
 pytest = "*"
 pytest-cov = "*"
 pytest-flake8 = "*"
 fakeredis = "*"
+autopep8 = "*"
 
 [requires]
 python_version = "3.8"
