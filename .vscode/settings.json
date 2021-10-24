@@ -2,5 +2,6 @@
     "python.linting.flake8Enabled": false,
     "python.linting.pylintEnabled": false,
     "python.linting.mypyEnabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "python.pythonPath": "/home/romanrey/.local/share/virtualenvs/dailyWord-bot-cIXgS3Sv/bin/python"
 }
