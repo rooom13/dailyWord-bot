@@ -18,6 +18,10 @@ services:
       - redis
     depends_on:
       - "redis"
+    volumes:
+        - /data/redis:/data
     ports:
       - "8443:8443"
     restart: always
+    environment: 
+      - VERSION=$VERSION

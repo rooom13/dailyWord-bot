@@ -17,7 +17,7 @@ class WordBank:
     df: pd.DataFrame = None
     last_updated_at = None
 
-    def __init__(self, local: bool = False, local_path: typing.Union[str] = "resources/word_bank.csv"):
+    def __init__(self, local: bool = False, local_path: typing.Union[str] = "tests/resources/word_bank.csv"):
         self.local = local
         self.local_path = local_path
         self.update()
