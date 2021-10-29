@@ -15,11 +15,13 @@ class DAO:
         # TODO: MODIFY LOGIC AND ADD LEVELS LIST
         chat_id: str = message.chat.id
         name: str = message.chat.first_name
+        levels: list = ['beginner', 'intermediate', 'advanced']
         self.r.sadd("users", chat_id)
 
         user_info = json.dumps(dict(
             name=name,
-            isActive=True
+            isActive=True,
+            levels=levels
         ))
         self.r.set(f"userInfo:{chat_id}", user_info)
 
@@ -62,11 +64,11 @@ class DAO:
 
     def get_user_blocked_words(self, chat_id) -> typing.List[str]:
         return to_string_list(self.r.smembers(f"blockedWords-{chat_id}"))
-    
+
     def get_user_levels(self, chat_id) -> typing.List[str]:
         # TODO: ADD datbase retrieval call
         return []
-    
+
     def remove_user_level(self, chat_id, level) -> None:
         # TODO: remove user level from db
         return 0
@@ -74,6 +76,7 @@ class DAO:
     def add_user_level(self, chat_id, level) -> None:
         # TODO: ADD level to user words level
         return 0
+
 
 TypeSmembers = typing.Set[typing.Union[bytes, float, int, str]]
 

@@ -107,21 +107,21 @@ class App:
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
         else:
             update.message.reply_text(msg, reply_markup=reply_markup)
-    
+
     def on_mylevels_callback(self, update: Update, context: CallbackContext) -> None:
         # TODO: ADD FUNCTIONALITY
-        msg = f"You can see words that belong to the level X Y and Z"
+        msg = "You can see words that belong to the level X Y and Z"
         update.message.reply_text(msg)
 
     def on_removelevel_callback(self, update: Update, context: CallbackContext) -> None:
         # TODO: ADD FUNCTIONALITY
-        msg = f"You removed level X from your levels"
+        msg = "You removed level X from your levels"
         update.message.reply_text(msg)
 
     def on_addlevel_callback(self, update: Update, context: CallbackContext) -> None:
         # TODO: ADD FUNCTIONALITY
         # take into account strange cases such as having already that level
-        msg = f"You added level X to your levels"
+        msg = "You added level X to your levels"
         update.message.reply_text(msg)
 
     def inline_keyboard_callbacks(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
