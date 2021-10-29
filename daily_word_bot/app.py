@@ -24,7 +24,10 @@ user_bot_commands = [
     BotCommand("/help", "Opens help section"),
     BotCommand("/start", "Starts sending words"),
     BotCommand("/stop", "Stops sending words"),
-    BotCommand("/blockedwords", "Shows your blocked words")
+    BotCommand("/blockedwords", "Shows your blocked words"),
+    BotCommand("/mylevels", "Shows the level of the words you want to be sent: beginner, intermediate or advanced"),
+    BotCommand("/addlevel", "Adds a level of the words you wish to receive"),
+    BotCommand("/removelevel", "Removes a level of the words you wish to receive"),
 ]
 
 available_commands_msg = utils.build_available_commands_msg(user_bot_commands)
@@ -104,6 +107,22 @@ class App:
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
         else:
             update.message.reply_text(msg, reply_markup=reply_markup)
+    
+    def on_mylevels_callback(self, update: Update, context: CallbackContext) -> None:
+        # TODO: ADD FUNCTIONALITY
+        msg = f"You can see words that belong to the level X Y and Z"
+        update.message.reply_text(msg)
+
+    def on_removelevel_callback(self, update: Update, context: CallbackContext) -> None:
+        # TODO: ADD FUNCTIONALITY
+        msg = f"You removed level X from your levels"
+        update.message.reply_text(msg)
+
+    def on_addlevel_callback(self, update: Update, context: CallbackContext) -> None:
+        # TODO: ADD FUNCTIONALITY
+        # take into account strange cases such as having already that level
+        msg = f"You added level X to your levels"
+        update.message.reply_text(msg)
 
     def inline_keyboard_callbacks(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         query = update.callback_query
@@ -138,6 +157,7 @@ class App:
                 self.on_get_blockwords_callback(update, context, is_inline_keyboard=True)
 
     def send_word(self, context: CallbackContext):  # pragma: no cover
+        # TODO: MODIFY FUNCTIONALITY
         users = self.dao.get_all_active_users()
         logger.info(f"sending words to {len(users)} users")
 
@@ -191,6 +211,9 @@ class App:
         dispatcher.add_handler(CommandHandler("users", self.on_users_callback))
         dispatcher.add_handler(CommandHandler("wordbankinfo", self.on_wordbankinfo_callback))
         dispatcher.add_handler(CommandHandler("blockedwords", self.on_get_blockwords_callback))
+        dispatcher.add_handler(CommandHandler("mylevels", self.on_mylevels_callback))
+        dispatcher.add_handler(CommandHandler("addlevel", self.on_addlevel_callback))
+        dispatcher.add_handler(CommandHandler("removelevel", self.on_addlevel_callback))
         dispatcher.add_handler(CallbackQueryHandler(self.inline_keyboard_callbacks))
 
         self.updater.start_polling()

@@ -12,6 +12,7 @@ class DAO:
         self.r: redis.Redis = redis.Redis(host=host, port=port)
 
     def save_user(self, message: Message):
+        # TODO: MODIFY LOGIC AND ADD LEVELS LIST
         chat_id: str = message.chat.id
         name: str = message.chat.first_name
         self.r.sadd("users", chat_id)
@@ -61,7 +62,18 @@ class DAO:
 
     def get_user_blocked_words(self, chat_id) -> typing.List[str]:
         return to_string_list(self.r.smembers(f"blockedWords-{chat_id}"))
+    
+    def get_user_levels(self, chat_id) -> typing.List[str]:
+        # TODO: ADD datbase retrieval call
+        return []
+    
+    def remove_user_level(self, chat_id, level) -> None:
+        # TODO: remove user level from db
+        return 0
 
+    def add_user_level(self, chat_id, level) -> None:
+        # TODO: ADD level to user words level
+        return 0
 
 TypeSmembers = typing.Set[typing.Union[bytes, float, int, str]]
 
