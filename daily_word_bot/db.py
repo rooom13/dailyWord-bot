@@ -12,7 +12,6 @@ class DAO:
         self.r: redis.Redis = redis.Redis(host=host, port=port)
 
     def save_user(self, message: Message):
-        # TODO: MODIFY LOGIC AND ADD LEVELS LIST
         chat_id: str = message.chat.id
         name: str = message.chat.first_name
         levels: list = ['beginner', 'intermediate', 'advanced']
@@ -26,6 +25,7 @@ class DAO:
         self.r.set(f"userInfo:{chat_id}", user_info)
 
     def set_user_inactive(self, message: Message):
+        # TODO : MODIFY LOGIC ADD LEVELS RETRIEVED FROM DB
         chat_id: str = message.chat.id
         name: str = message.chat.first_name
 
@@ -66,16 +66,24 @@ class DAO:
         return to_string_list(self.r.smembers(f"blockedWords-{chat_id}"))
 
     def get_user_levels(self, chat_id) -> typing.List[str]:
-        # TODO: ADD datbase retrieval call
-        return []
+        user_info = self.get_user(chat_id)
+        return user_info["levels"]
 
     def remove_user_level(self, chat_id, level) -> None:
-        # TODO: remove user level from db
-        return 0
+        user_info = self.get_user(chat_id)
+        levels = user_info["levels"]
+        levels.remove(level)
+        user_info["levels"] = levels
+        user_info = json.dumps(user_info)
+        self.r.set(f"userInfo:{chat_id}", user_info)
 
     def add_user_level(self, chat_id, level) -> None:
-        # TODO: ADD level to user words level
-        return 0
+        user_info = self.get_user(chat_id)
+        levels = user_info["levels"]
+        levels.append(level)
+        user_info["levels"] = levels
+        user_info = json.dumps(user_info)
+        self.r.set(f"userInfo:{chat_id}", user_info)
 
 
 TypeSmembers = typing.Set[typing.Union[bytes, float, int, str]]
