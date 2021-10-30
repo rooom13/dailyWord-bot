@@ -62,27 +62,10 @@ def test_set_get_remove_user_bocked_words():
     dao.r.flushall()
 
 
-def test_get_user_levels():
-    dao.save_user(message)
-    levels = dao.get_user_levels(chat_id)
-    tc.assertEqual(test_user_info["levels"], levels)
-
-
-def test_remove_user_level():
-    level_to_remove = 'beginner'
-    dao.save_user(message)
-    dao.remove_user_level(chat_id, level_to_remove)
-    levels = dao.get_user_levels(chat_id)
-    test_levels = test_user_info["levels"]
-    test_levels.remove(level_to_remove)
-    tc.assertEqual(test_levels, levels)
-
-
-def test_add_user_level():
+def test_get_add_remove_user_level():
     levels_to_remove = ['beginner', 'intermediate', 'advanced']
     level_to_add = 'advanced'
     test_levels = test_user_info["levels"]
-    test_levels.append('beginner')
 
     dao.save_user(message)
 
