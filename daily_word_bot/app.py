@@ -26,8 +26,8 @@ user_bot_commands = [
     BotCommand("/stop", "Stops sending words"),
     BotCommand("/blockedwords", "Shows your blocked words"),
     BotCommand("/mylevels", "Shows the level of the words you want to be sent: beginner, intermediate or advanced"),
-    BotCommand("/addlevel", "Adds a level of the words you wish to receive"),
-    BotCommand("/removelevel", "Removes a level of the words you wish to receive"),
+    BotCommand("/addlevel", "Adds to your levels a level of the words you wish to receive"),
+    BotCommand("/removelevel", "Removes from your levels a level of the words you wish to receive"),
 ]
 
 available_commands_msg = utils.build_available_commands_msg(user_bot_commands)

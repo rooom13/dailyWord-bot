@@ -10,6 +10,10 @@ def test_word_bank():
     random_word = word_bank.get_random(exclude=["WID1", "WID2", "WID3", "WID4"], levels=['beginner', 'intermediate', 'advanced'])
     tc.assertEqual(random_word.get("word_id"), "WID5")
 
+    word_bank = WordBank(local=True, local_path="tests/resources/word_bank.csv")
+    random_word = word_bank.get_random(exclude=["WID1", "WID2", "WID3", "WID4"], levels=['advanced'])
+    tc.assertEqual(random_word.get("msg"), "You have no more words to learn")
+
     random_word = word_bank.get_random(exclude=["WID1", "WID2", "WID3", "WID4", "WID5"], levels=['intermediate'])
     tc.assertIn("word_id", random_word)
     tc.assertIn("es", random_word)
