@@ -15,7 +15,7 @@ live_config = Config(
     BOT_TOKEN=os.getenv("BOT_TOKEN"),
     REDIS_HOST="redis",
     WORD_BANK_LOCAL=False,
-    VERSION=False
+    VERSION=os.getenv("VERSION")
 )
 
 test_config = Config(
