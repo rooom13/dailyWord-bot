@@ -109,8 +109,10 @@ class App:
             update.message.reply_text(msg, reply_markup=reply_markup)
 
     def on_mylevels_callback(self, update: Update, context: CallbackContext) -> None:
-        # TODO: ADD FUNCTIONALITY
-        msg = "You can see words that belong to the level X Y and Z"
+        message = update.message or update.callback_query.message
+        chat_id = message.chat_id
+        levels = self.dao.get_user_levels(chat_id)
+        msg = "You will be sent words that are from the levels: " + ', '.join(levels)
         update.message.reply_text(msg)
 
     def on_removelevel_callback(self, update: Update, context: CallbackContext) -> None:
@@ -157,7 +159,7 @@ class App:
                 self.on_get_blockwords_callback(update, context, is_inline_keyboard=True)
 
     def send_word(self, context: CallbackContext):  # pragma: no cover
-        # TODO: MODIFY FUNCTIONALITY
+        # TODO: MODIFY FUNCTIONALITY TO TAKE INTO ACCOUNT CASE WHERE NO WORDS TO BE SENT
         users = self.dao.get_all_active_users()
         logger.info(f"sending words to {len(users)} users")
 
