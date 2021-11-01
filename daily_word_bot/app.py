@@ -1,5 +1,6 @@
 import typing
 import logging
+from datetime import datetime
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
@@ -45,10 +46,6 @@ class App:
             msg = utils.build_users_msg(users)
         else:
             msg = "Loitering around my github?\nDon't hesitate greeting me! 😀"
-        update.message.reply_text(msg)
-
-    def on_wordbankinfo_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
-        msg = f"Word bank info:\n - {len(self.word_bank.df.index)} words, last updated on {self.word_bank.last_updated_at}"
         update.message.reply_text(msg)
 
     def on_start_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
@@ -105,37 +102,43 @@ class App:
         else:
             update.message.reply_text(msg, reply_markup=reply_markup)
 
+    def on_info_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
+        msg = f"""Version: <i>{config.VERSION}</i> deployed on {self.start_date}
+        \nWord bank info:\n - {len(self.word_bank.df.index)} words, last updated on {self.word_bank.last_updated_at}"""
+        update.message.reply_text(msg, parse_mode='HTML')
+
     def inline_keyboard_callbacks(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         query = update.callback_query
         query.answer()
 
         callback_data = query.data.split(" ")
+        command = callback_data[0]
+        args = callback_data[1:]
 
-        if len(callback_data) == 1:
-            if callback_data == "/start":
-                self.on_start_callback(update, context, is_inline_keyboard=True)
-            elif callback_data == "/stop":
-                self.on_stop_callback(update, context, is_inline_keyboard=True)
-        elif len(callback_data) == 2:
-            command: str = callback_data[0]
-            word_id: str = callback_data[1]
-            if command == "/blockword":
-                self.dao.save_user_blocked_word(update.callback_query.message, word_id)
-                reply_markup = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("Zurücknehmen - Deshacer", callback_data=f"/unblockword {word_id}")]
-                ])
-                msg = "✅\n" + update.callback_query.message.text
-                update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
-            elif command == "/unblockword":
-                self.dao.remove_user_blocked_word(update.callback_query.message, word_id)
-                reply_markup = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("Gelernt! - Aprendida!", callback_data=f"/blockword {word_id}")]
-                ])
-                msg = update.callback_query.message.text[2:]  # remove '✅\n'
-                update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
-            elif command == "/unblockword_from_blocked_words":
-                self.dao.remove_user_blocked_word(update.callback_query.message, word_id)
-                self.on_get_blockwords_callback(update, context, is_inline_keyboard=True)
+        if command == "/start":
+            self.on_start_callback(update, context, is_inline_keyboard=True)
+        elif command == "/stop":
+            self.on_stop_callback(update, context, is_inline_keyboard=True)
+        elif command == "/blockword":
+            word_id = args[0]
+            self.dao.save_user_blocked_word(update.callback_query.message, word_id)
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("Zurücknehmen - Deshacer", callback_data=f"/unblockword {word_id}")]
+            ])
+            msg = "✅\n" + update.callback_query.message.text
+            update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
+        elif command == "/unblockword":
+            word_id = args[0]
+            self.dao.remove_user_blocked_word(update.callback_query.message, word_id)
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("Gelernt! - Aprendida!", callback_data=f"/blockword {word_id}")]
+            ])
+            msg = update.callback_query.message.text[2:]  # remove '✅\n'
+            update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
+        elif command == "/unblockword_from_blocked_words":
+            word_id = args[0]
+            self.dao.remove_user_blocked_word(update.callback_query.message, word_id)
+            self.on_get_blockwords_callback(update, context, is_inline_keyboard=True)
 
     def send_word(self, context: CallbackContext):  # pragma: no cover
         users = self.dao.get_all_active_users()
@@ -158,6 +161,7 @@ class App:
                 logger.error("shit", exc_info=e)
 
     def __init__(self):
+        self.start_date = datetime.now()
         self.dao = DAO(config.REDIS_HOST)
         self.word_bank = WordBank(config.WORD_BANK_LOCAL)
         self.backup_service = BackupService()
@@ -189,7 +193,7 @@ class App:
         dispatcher.add_handler(CommandHandler("stop", self.on_stop_callback))
         dispatcher.add_handler(CommandHandler("help", self.on_help_callback))
         dispatcher.add_handler(CommandHandler("users", self.on_users_callback))
-        dispatcher.add_handler(CommandHandler("wordbankinfo", self.on_wordbankinfo_callback))
+        dispatcher.add_handler(CommandHandler("info", self.on_info_callback))
         dispatcher.add_handler(CommandHandler("blockedwords", self.on_get_blockwords_callback))
         dispatcher.add_handler(CallbackQueryHandler(self.inline_keyboard_callbacks))
 
