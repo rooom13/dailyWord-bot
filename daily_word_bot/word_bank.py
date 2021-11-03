@@ -54,7 +54,7 @@ class WordBank:
         df_candidates = self.df.loc[(~self.df.index.isin(exclude)) & (self.df['level'].isin(levels))]
 
         if len(df_candidates.index) == 0:
-            return {"msg": "You have no more words to learn"}
+            return {}
 
         row = df_candidates.sample().iloc[0]
 

@@ -25,13 +25,14 @@ class DAO:
         self.r.set(f"userInfo:{chat_id}", user_info)
 
     def set_user_inactive(self, message: Message):
-        # TODO : MODIFY LOGIC ADD LEVELS RETRIEVED FROM DB
         chat_id: str = message.chat.id
         name: str = message.chat.first_name
+        levels: list = self.get_user_levels(chat_id)
 
         user_info = json.dumps(dict(
             name=name,
-            isActive=False
+            isActive=False,
+            levels=levels
         ))
         self.r.set(f"userInfo:{chat_id}", user_info)
 
