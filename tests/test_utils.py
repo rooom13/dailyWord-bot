@@ -85,3 +85,9 @@ def test_build_users_msg():
                    "Users: (2)"
                    "\n- aChatId romanito 😀"
                    "\n- aChatId2 pinxulino 😴")
+
+
+def test_get_level_from_command():
+    test_command = '/addorremovelevel beginner'
+    extracted_level = utils.get_level_from_command(test_command)
+    tc.assertEqual(extracted_level, 'beginner')

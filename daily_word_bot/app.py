@@ -108,7 +108,7 @@ class App:
         else:
             update.message.reply_text(msg, reply_markup=reply_markup)
 
-    def on_mylevels_callback(self, update: Update, context: CallbackContext) -> None:
+    def on_mylevels_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         # get user information from the message
         message = update.message or update.callback_query.message
         chat_id = message.chat_id
@@ -118,7 +118,7 @@ class App:
         msg = "You will be sent words that are from the levels: " + ', '.join(levels)
         update.message.reply_text(msg)
 
-    def on_removelevel_callback(self, update: Update, context: CallbackContext) -> None:
+    def on_removelevel_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         # get user information from the message
         message = update.message or update.callback_query.message
         chat_id = message.chat_id
@@ -144,7 +144,7 @@ class App:
 
         update.message.reply_text(answer_msg)
 
-    def on_addlevel_callback(self, update: Update, context: CallbackContext) -> None:
+    def on_addlevel_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         # get user information from the message
         message = update.message or update.callback_query.message
         chat_id = message.chat_id
