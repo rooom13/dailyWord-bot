@@ -109,16 +109,40 @@ class App:
             update.message.reply_text(msg, reply_markup=reply_markup)
 
     def on_mylevels_callback(self, update: Update, context: CallbackContext) -> None:
+        # get user information from the message
         message = update.message or update.callback_query.message
         chat_id = message.chat_id
+        # look for the levels of the user in the db
         levels = self.dao.get_user_levels(chat_id)
+        # build the message and send it back to the user
         msg = "You will be sent words that are from the levels: " + ', '.join(levels)
         update.message.reply_text(msg)
 
     def on_removelevel_callback(self, update: Update, context: CallbackContext) -> None:
-        # TODO: ADD FUNCTIONALITY
-        msg = "You removed level X from your levels"
-        update.message.reply_text(msg)
+        # get user information from the message
+        message = update.message or update.callback_query.message
+        chat_id = message.chat_id
+        # bot answer variable
+        answer_msg = ''
+
+        # look for the levels of the user in the db
+        levels = self.dao.get_user_levels(chat_id)
+
+        # extract level sent by the user
+        level_to_remove = utils.get_level_from_command(message.text)
+
+        if (not level_to_remove) or (level_to_remove not in levels):
+            # error message
+            error_msg = 'Sorry I did not understand the level you sent me 😕\n'
+            try_again = 'Your current levels are: '+', '.join(levels)+'.'
+            answer_msg = error_msg + try_again
+        else :
+            self.dao.remove_user_level(chat_id,level_to_remove)
+            current_levels = self.dao.get_user_levels(chat_id)
+            levels_text = 'Your levels now are: '+', '.join(current_levels)
+            answer_msg = 'The level '+ level_to_remove + ' was removed successfully 🙂\n' + levels_text
+              
+        update.message.reply_text(answer_msg)
 
     def on_addlevel_callback(self, update: Update, context: CallbackContext) -> None:
         # TODO: ADD FUNCTIONALITY
@@ -215,7 +239,7 @@ class App:
         dispatcher.add_handler(CommandHandler("blockedwords", self.on_get_blockwords_callback))
         dispatcher.add_handler(CommandHandler("mylevels", self.on_mylevels_callback))
         dispatcher.add_handler(CommandHandler("addlevel", self.on_addlevel_callback))
-        dispatcher.add_handler(CommandHandler("removelevel", self.on_addlevel_callback))
+        dispatcher.add_handler(CommandHandler("removelevel", self.on_removelevel_callback))
         dispatcher.add_handler(CallbackQueryHandler(self.inline_keyboard_callbacks))
 
         self.updater.start_polling()
