@@ -4,6 +4,7 @@ from telegram import BotCommand
 
 from daily_word_bot import utils
 
+POSSIBLE_USER_LEVELS: list = ['beginner', 'intermediate', 'advanced']
 
 def highlight(w: str) -> str:
     return f"<b>{w}</b>"
