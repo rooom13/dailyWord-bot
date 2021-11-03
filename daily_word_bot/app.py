@@ -134,14 +134,14 @@ class App:
         if (not level_to_remove) or (level_to_remove not in levels):
             # error message
             error_msg = 'Sorry I did not understand the level you sent me 😕\n'
-            try_again = 'Your current levels are: '+', '.join(levels)+'.'
+            try_again = 'Your current levels are: ' + ', '.join(levels) + '.'
             answer_msg = error_msg + try_again
-        else :
-            self.dao.remove_user_level(chat_id,level_to_remove)
+        else:
+            self.dao.remove_user_level(chat_id, level_to_remove)
             current_levels = self.dao.get_user_levels(chat_id)
-            levels_text = 'Your levels now are: '+', '.join(current_levels)
-            answer_msg = 'The level '+ level_to_remove + ' was removed successfully 🙂\n' + levels_text
-              
+            levels_text = 'Your levels now are: ' + ', '.join(current_levels)
+            answer_msg = 'The level ' + level_to_remove + ' was removed successfully 🙂\n' + levels_text
+
         update.message.reply_text(answer_msg)
 
     def on_addlevel_callback(self, update: Update, context: CallbackContext) -> None:
@@ -160,19 +160,19 @@ class App:
         if (not level_to_add) or (level_to_add not in utils.POSSIBLE_USER_LEVELS):
             # error message
             error_msg = 'Sorry I did not understand the level you sent me 😕\n'
-            try_again = 'Possible levels are: '+', '.join(utils.POSSIBLE_USER_LEVELS)+'.'
+            try_again = 'Possible levels are: ' + ', '.join(utils.POSSIBLE_USER_LEVELS) + '.'
             answer_msg = error_msg + try_again
         elif level_to_add in levels:
             # error message
             error_msg = 'Sorry you already have that level assigned 😕\n'
-            try_again = 'Your current levels are: '+', '.join(levels)+'.'
+            try_again = 'Your current levels are: ' + ', '.join(levels) + '.'
             answer_msg = error_msg + try_again
-        else :
-            self.dao.add_user_level(chat_id,level_to_add)
+        else:
+            self.dao.add_user_level(chat_id, level_to_add)
             current_levels = self.dao.get_user_levels(chat_id)
-            levels_text = 'Your levels now are: '+', '.join(current_levels)
-            answer_msg = 'The level '+ level_to_add + ' was added successfully 🙂\n' + levels_text
-              
+            levels_text = 'Your levels now are: ' + ', '.join(current_levels)
+            answer_msg = 'The level ' + level_to_add + ' was added successfully 🙂\n' + levels_text
+
         update.message.reply_text(answer_msg)
 
     def inline_keyboard_callbacks(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover

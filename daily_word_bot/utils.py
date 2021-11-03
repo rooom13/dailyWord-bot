@@ -6,6 +6,7 @@ from daily_word_bot import utils
 
 POSSIBLE_USER_LEVELS: list = ['beginner', 'intermediate', 'advanced']
 
+
 def highlight(w: str) -> str:
     return f"<b>{w}</b>"
 
@@ -18,9 +19,9 @@ def get_level_from_command(command: str) -> str:
     command_parts = command.split(maxsplit=1)
 
     # check result of the split
-    if len(command_parts) == 2: # if user specified a level
+    if len(command_parts) == 2:  # if user specified a level
         extracted_level = command_parts[1]
-        
+
     return extracted_level
 
 
