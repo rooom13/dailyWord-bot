@@ -88,6 +88,12 @@ def test_build_users_msg():
 
 
 def test_get_level_from_command():
+    # normal case
     test_command = '/addorremovelevel beginner'
-    extracted_level = utils.get_level_from_command(test_command)
-    tc.assertEqual(extracted_level, 'beginner')
+    extracted_level_1 = utils.get_level_from_command(test_command)
+    tc.assertEqual(extracted_level_1, 'beginner')
+
+    # no parameter case
+    test_command_2 = '/addorremovelevel'
+    extracted_level_2 = utils.get_level_from_command(test_command_2)
+    tc.assertEqual(extracted_level_2, '')
