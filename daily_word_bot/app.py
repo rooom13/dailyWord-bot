@@ -208,7 +208,6 @@ class App:
                 self.on_get_blockwords_callback(update, context, is_inline_keyboard=True)
 
     def send_word(self, context: CallbackContext):  # pragma: no cover
-        # TODO: MODIFY FUNCTIONALITY TO TAKE INTO ACCOUNT CASE WHERE NO WORDS TO BE SENT
         users = self.dao.get_all_active_users()
         logger.info(f"sending words to {len(users)} users")
 
@@ -216,9 +215,14 @@ class App:
             try:
                 chat_id = user["chatId"]
                 exclude = self.dao.get_user_blocked_words(chat_id)
-                word_data = self.word_bank.get_random(exclude=exclude)
+                levels = self.dao.get_user_levels(chat_id)
+                word_data = self.word_bank.get_random(exclude=exclude, levels=levels)
+                msg: str = ''
 
-                msg: str = utils.build_word_msg(word_data)
+                if not word_data:
+                    msg = 'You have no more words to learn'
+                else:
+                    msg = utils.build_word_msg(word_data)
 
                 reply_markup = InlineKeyboardMarkup([
                     [InlineKeyboardButton("Gelernt! - Aprendida!", callback_data=f"/blockword {word_data['word_id']}")]
@@ -244,7 +248,7 @@ class App:
             trigger="cron",
             day="*",
             hour="10,18,20",
-            minute="30",
+            minute="8",
             # second="10,20,30,40,50,0"  # test
         ))
         self.updater.job_queue.run_custom(lambda x: self.word_bank.update(), job_kwargs=dict(
