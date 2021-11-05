@@ -11,34 +11,33 @@ class DAO:
         port: int = 6379
         self.r: redis.Redis = redis.Redis(host=host, port=port)
 
-    def save_user(self, message: Message):
+    def save_user(self, message: Message, user_levels: list = []):
         chat_id: str = message.chat.id
         name: str = message.chat.first_name
-        levels: list = ['beginner', 'intermediate', 'advanced']
         self.r.sadd("users", chat_id)
 
         user_info = json.dumps(dict(
             name=name,
             isActive=True,
-            levels=levels
+            levels=user_levels
         ))
         self.r.set(f"userInfo:{chat_id}", user_info)
 
-    def set_user_inactive(self, message: Message):
+    def set_user_inactive(self, message: Message, user_levels: list = []):
         chat_id: str = message.chat.id
         name: str = message.chat.first_name
-        levels: list = self.get_user_levels(chat_id)
 
         user_info = json.dumps(dict(
             name=name,
             isActive=False,
-            levels=levels
+            levels=user_levels
         ))
         self.r.set(f"userInfo:{chat_id}", user_info)
 
     def get_user(self, chat_id: str) -> dict:
         user_info = self.r.get(f"userInfo:{chat_id}")
-        return json.loads(user_info)
+        user_info = json.loads(user_info) if user_info else {}
+        return user_info
 
     def get_all_user_ids(self) -> typing.List[str]:
         return to_string_list(self.r.smembers("users"))
@@ -68,7 +67,8 @@ class DAO:
 
     def get_user_levels(self, chat_id) -> typing.List[str]:
         user_info = self.get_user(chat_id)
-        return user_info["levels"]
+        user_levels = user_info["levels"] if "levels" in user_info else []
+        return user_levels
 
     def remove_user_level(self, chat_id, level) -> None:
         user_info = self.get_user(chat_id)

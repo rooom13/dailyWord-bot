@@ -56,7 +56,10 @@ class App:
 
     def on_start_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
         message = update.message or update.callback_query.message
-        self.dao.save_user(message)
+        chat_id = message.chat_id
+        levels = self.dao.get_user_levels(chat_id)
+        user_levels = levels if len(levels) > 0 else ['beginner', 'intermediate', 'advanced']
+        self.dao.save_user(message, user_levels)
 
         msg = f"Hello {message.chat.first_name}! " + available_commands_msg
         reply_markup = InlineKeyboardMarkup([

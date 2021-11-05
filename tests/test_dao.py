@@ -24,7 +24,9 @@ message = Message(message_id=123456789, date="",
 
 
 def test_save_user():
-    dao.save_user(message)
+    levels = dao.get_user_levels(chat_id)
+    user_levels = levels if len(levels) > 0 else ['beginner', 'intermediate', 'advanced']
+    dao.save_user(message, user_levels)
     user_info = dao.get_user(chat_id)
     active_users = dao.get_all_user_ids()
 
@@ -34,18 +36,22 @@ def test_save_user():
 
 
 def test_get_all_users():
-    dao.save_user(message)
+    levels = dao.get_user_levels(chat_id)
+    user_levels = levels if len(levels) > 0 else ['beginner', 'intermediate', 'advanced']
+    dao.save_user(message, user_levels)
     users = list(dao.get_all_users())
     tc.assertIn(dict(test_user_info, chatId=chat_id), users)
     dao.r.flushall()
 
 
 def test_set_user_inactive():
-    dao.save_user(message)
+    levels = dao.get_user_levels(chat_id)
+    user_levels = levels if len(levels) > 0 else ['beginner', 'intermediate', 'advanced']
+    dao.save_user(message, user_levels)
     active_users = dao.get_all_active_users()
     tc.assertIn(dict(test_user_info, chatId=chat_id), active_users)
 
-    dao.set_user_inactive(message)
+    dao.set_user_inactive(message, user_levels)
     active_users = dao.get_all_active_users()
     tc.assertEqual([], active_users)
 
@@ -66,8 +72,10 @@ def test_get_add_remove_user_level():
     levels_to_remove = ['beginner', 'intermediate', 'advanced']
     level_to_add = 'advanced'
     test_levels = test_user_info["levels"]
+    levels = dao.get_user_levels(chat_id)
+    user_levels = levels if len(levels) > 0 else ['beginner', 'intermediate', 'advanced']
 
-    dao.save_user(message)
+    dao.save_user(message, user_levels)
 
     for level_to_remove in levels_to_remove:
         dao.remove_user_level(chat_id, level_to_remove)
