@@ -24,7 +24,10 @@ user_bot_commands = [
     BotCommand("/help", "Opens help section"),
     BotCommand("/start", "Starts sending words"),
     BotCommand("/stop", "Stops sending words"),
-    BotCommand("/blockedwords", "Shows your blocked words")
+    BotCommand("/blockedwords", "Shows your blocked words"),
+    BotCommand("/mylevels", "Shows the level of the words you want to be sent: beginner, intermediate or advanced"),
+    BotCommand("/addlevel", "Adds to your levels a level of the words you wish to receive"),
+    BotCommand("/removelevel", "Removes from your levels a level of the words you wish to receive"),
 ]
 
 available_commands_msg = utils.build_available_commands_msg(user_bot_commands)
@@ -53,7 +56,11 @@ class App:
 
     def on_start_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
         message = update.message or update.callback_query.message
-        self.dao.save_user(message)
+        chat_id = message.chat_id
+        # check if user already has levels assigned
+        levels = self.dao.get_user_levels(chat_id)
+        user_levels = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
+        self.dao.save_user(message, user_levels)
 
         msg = f"Hello {message.chat.first_name}! " + available_commands_msg
         reply_markup = InlineKeyboardMarkup([
@@ -67,7 +74,11 @@ class App:
 
     def on_stop_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
         message = update.message or update.callback_query.message
-        self.dao.set_user_inactive(message)
+        chat_id = message.chat_id
+        # check if user already has levels assigned
+        levels = self.dao.get_user_levels(chat_id)
+        user_levels = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
+        self.dao.set_user_inactive(message, user_levels)
 
         msg = "You will no longer receive words!\n...Unles you use /start"
         reply_markup = InlineKeyboardMarkup([
@@ -104,6 +115,75 @@ class App:
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
         else:
             update.message.reply_text(msg, reply_markup=reply_markup)
+
+    def on_mylevels_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
+        # get user information from the message
+        message = update.message or update.callback_query.message
+        chat_id = message.chat_id
+        # look for the levels of the user in the db
+        levels = self.dao.get_user_levels(chat_id)
+        # build the message and send it back to the user
+        msg = "You will be sent words that are from the levels: " + ', '.join(levels)
+        update.message.reply_text(msg)
+
+    def on_removelevel_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
+        # get user information from the message
+        message = update.message or update.callback_query.message
+        chat_id = message.chat_id
+        # bot answer variable
+        answer_msg = ''
+
+        # look for the levels of the user in the db
+        levels = self.dao.get_user_levels(chat_id)
+
+        # extract level sent by the user
+        level_to_remove = utils.get_level_from_command(message.text)
+
+        # check if provided level is known or assigned to user
+        if (not level_to_remove) or (level_to_remove not in levels):
+            # error message
+            error_msg = 'Sorry I did not understand the level you sent me 😕\n'
+            try_again = 'Your current levels are: ' + ', '.join(levels) + '.'
+            answer_msg = error_msg + try_again
+        else:
+            self.dao.remove_user_level(chat_id, level_to_remove)
+            current_levels = self.dao.get_user_levels(chat_id)
+            levels_text = 'Your levels now are: ' + ', '.join(current_levels)
+            answer_msg = 'The level ' + level_to_remove + ' was removed successfully 🙂\n' + levels_text
+
+        update.message.reply_text(answer_msg)
+
+    def on_addlevel_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
+        # get user information from the message
+        message = update.message or update.callback_query.message
+        chat_id = message.chat_id
+        # bot answer variable
+        answer_msg = ''
+
+        # look for the levels of the user in the db
+        levels = self.dao.get_user_levels(chat_id)
+
+        # extract level sent by the user
+        level_to_add = utils.get_level_from_command(message.text)
+
+        # check if provided level is known or not assigned to user
+        if (not level_to_add) or (level_to_add not in utils.POSSIBLE_USER_LEVELS):
+            # error message
+            error_msg = 'Sorry I did not understand the level you sent me 😕\n'
+            try_again = 'Possible levels are: ' + ', '.join(utils.POSSIBLE_USER_LEVELS) + '.'
+            answer_msg = error_msg + try_again
+        elif level_to_add in levels:
+            # error message
+            error_msg = 'Sorry you already have that level assigned 😕\n'
+            try_again = 'Your current levels are: ' + ', '.join(levels) + '.'
+            answer_msg = error_msg + try_again
+        else:
+            self.dao.add_user_level(chat_id, level_to_add)
+            current_levels = self.dao.get_user_levels(chat_id)
+            levels_text = 'Your levels now are: ' + ', '.join(current_levels)
+            answer_msg = 'The level ' + level_to_add + ' was added successfully 🙂\n' + levels_text
+
+        update.message.reply_text(answer_msg)
 
     def inline_keyboard_callbacks(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         query = update.callback_query
@@ -145,9 +225,14 @@ class App:
             try:
                 chat_id = user["chatId"]
                 exclude = self.dao.get_user_blocked_words(chat_id)
-                word_data = self.word_bank.get_random(exclude=exclude)
+                levels = self.dao.get_user_levels(chat_id)
+                word_data = self.word_bank.get_random(exclude=exclude, levels=levels)
+                msg: str = ''
 
-                msg: str = utils.build_word_msg(word_data)
+                if not word_data:
+                    msg = 'Du hast alles gelernt! - ¡Te lo has aprendido todo!'
+                else:
+                    msg = utils.build_word_msg(word_data)
 
                 reply_markup = InlineKeyboardMarkup([
                     [InlineKeyboardButton("Gelernt! - Aprendida!", callback_data=f"/blockword {word_data['word_id']}")]
@@ -173,7 +258,7 @@ class App:
             trigger="cron",
             day="*",
             hour="10,18,20",
-            minute="30",
+            minute="8",
             # second="10,20,30,40,50,0"  # test
         ))
         self.updater.job_queue.run_custom(lambda x: self.word_bank.update(), job_kwargs=dict(
@@ -191,6 +276,9 @@ class App:
         dispatcher.add_handler(CommandHandler("users", self.on_users_callback))
         dispatcher.add_handler(CommandHandler("wordbankinfo", self.on_wordbankinfo_callback))
         dispatcher.add_handler(CommandHandler("blockedwords", self.on_get_blockwords_callback))
+        dispatcher.add_handler(CommandHandler("mylevels", self.on_mylevels_callback))
+        dispatcher.add_handler(CommandHandler("addlevel", self.on_addlevel_callback))
+        dispatcher.add_handler(CommandHandler("removelevel", self.on_removelevel_callback))
         dispatcher.add_handler(CallbackQueryHandler(self.inline_keyboard_callbacks))
 
         self.updater.start_polling()
