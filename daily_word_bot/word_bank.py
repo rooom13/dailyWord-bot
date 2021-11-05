@@ -47,7 +47,7 @@ class WordBank:
         self.last_updated_at = str(datetime.now())
 
     def get_random(self, exclude: list = [], levels: list = []) -> dict:
-        """Get a random word excluding the provided ones"""
+        """Get a random word excluding the provided ones and taking into account the user levels"""
         if len(exclude) >= len(self.df.index):
             exclude = []
 
