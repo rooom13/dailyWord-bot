@@ -57,8 +57,9 @@ class App:
     def on_start_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
         message = update.message or update.callback_query.message
         chat_id = message.chat_id
+        # check if user laready has levels assigned
         levels = self.dao.get_user_levels(chat_id)
-        user_levels = levels if len(levels) > 0 else ['beginner', 'intermediate', 'advanced']
+        user_levels = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
         self.dao.save_user(message, user_levels)
 
         msg = f"Hello {message.chat.first_name}! " + available_commands_msg
@@ -73,7 +74,11 @@ class App:
 
     def on_stop_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
         message = update.message or update.callback_query.message
-        self.dao.set_user_inactive(message)
+        chat_id = message.chat_id
+        # check if user laready has levels assigned
+        levels = self.dao.get_user_levels(chat_id)
+        user_levels = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
+        self.dao.set_user_inactive(message, user_levels)
 
         msg = "You will no longer receive words!\n...Unles you use /start"
         reply_markup = InlineKeyboardMarkup([
@@ -134,6 +139,7 @@ class App:
         # extract level sent by the user
         level_to_remove = utils.get_level_from_command(message.text)
 
+        # check if provided level is known or assigned to user
         if (not level_to_remove) or (level_to_remove not in levels):
             # error message
             error_msg = 'Sorry I did not understand the level you sent me 😕\n'
@@ -160,6 +166,7 @@ class App:
         # extract level sent by the user
         level_to_add = utils.get_level_from_command(message.text)
 
+        # check if provided level is known or not assigned to user
         if (not level_to_add) or (level_to_add not in utils.POSSIBLE_USER_LEVELS):
             # error message
             error_msg = 'Sorry I did not understand the level you sent me 😕\n'
@@ -223,7 +230,7 @@ class App:
                 msg: str = ''
 
                 if not word_data:
-                    msg = 'You have no more words to learn'
+                    msg = 'Du hast alles gelernt! - ¡Te lo has aprendido todo!'
                 else:
                     msg = utils.build_word_msg(word_data)
 

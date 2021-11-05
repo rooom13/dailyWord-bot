@@ -5,6 +5,7 @@ from telegram import Message, Chat
 
 from daily_word_bot.config import config
 from daily_word_bot.db import DAO
+from daily_word_bot import utils
 
 tc = unittest.TestCase()
 
@@ -25,7 +26,7 @@ message = Message(message_id=123456789, date="",
 
 def test_save_user():
     levels = dao.get_user_levels(chat_id)
-    user_levels = levels if len(levels) > 0 else ['beginner', 'intermediate', 'advanced']
+    user_levels = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
     dao.save_user(message, user_levels)
     user_info = dao.get_user(chat_id)
     active_users = dao.get_all_user_ids()
@@ -37,7 +38,7 @@ def test_save_user():
 
 def test_get_all_users():
     levels = dao.get_user_levels(chat_id)
-    user_levels = levels if len(levels) > 0 else ['beginner', 'intermediate', 'advanced']
+    user_levels = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
     dao.save_user(message, user_levels)
     users = list(dao.get_all_users())
     tc.assertIn(dict(test_user_info, chatId=chat_id), users)
@@ -46,7 +47,7 @@ def test_get_all_users():
 
 def test_set_user_inactive():
     levels = dao.get_user_levels(chat_id)
-    user_levels = levels if len(levels) > 0 else ['beginner', 'intermediate', 'advanced']
+    user_levels = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
     dao.save_user(message, user_levels)
     active_users = dao.get_all_active_users()
     tc.assertIn(dict(test_user_info, chatId=chat_id), active_users)
@@ -69,11 +70,11 @@ def test_set_get_remove_user_bocked_words():
 
 
 def test_get_add_remove_user_level():
-    levels_to_remove = ['beginner', 'intermediate', 'advanced']
+    levels_to_remove = utils.POSSIBLE_USER_LEVELS
     level_to_add = 'advanced'
     test_levels = test_user_info["levels"]
     levels = dao.get_user_levels(chat_id)
-    user_levels = levels if len(levels) > 0 else ['beginner', 'intermediate', 'advanced']
+    user_levels = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
 
     dao.save_user(message, user_levels)
 
