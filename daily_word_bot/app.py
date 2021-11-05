@@ -57,7 +57,7 @@ class App:
     def on_start_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
         message = update.message or update.callback_query.message
         chat_id = message.chat_id
-        # check if user laready has levels assigned
+        # check if user already has levels assigned
         levels = self.dao.get_user_levels(chat_id)
         user_levels = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
         self.dao.save_user(message, user_levels)
@@ -75,7 +75,7 @@ class App:
     def on_stop_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
         message = update.message or update.callback_query.message
         chat_id = message.chat_id
-        # check if user laready has levels assigned
+        # check if user already has levels assigned
         levels = self.dao.get_user_levels(chat_id)
         user_levels = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
         self.dao.set_user_inactive(message, user_levels)

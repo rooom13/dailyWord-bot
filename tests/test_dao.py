@@ -13,7 +13,7 @@ chat_id = "123"
 test_user_info = dict(
     name="Pepe",
     isActive=True,
-    levels=['beginner', 'intermediate', 'advanced']
+    levels=utils.POSSIBLE_USER_LEVELS
 )
 dao = DAO(config.REDIS_HOST)
 dao.r = fakeredis.FakeStrictRedis()
