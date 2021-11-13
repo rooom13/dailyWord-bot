@@ -104,3 +104,16 @@ def test_build_levels_answer():
         index = answer.get('reply_markup').inline_keyboard.index(button)
         tc.assertEqual(button[0].text, expected_reply_markup.inline_keyboard[index][0].text)
         tc.assertEqual(button[0].callback_data, expected_reply_markup.inline_keyboard[index][0].callback_data)
+
+
+def test_build_broadcast_preview_msg():
+    msg = utils.build_broadcast_preview_msg("test msg")
+    expected = "Broadcast message preview:\n----------\ntest msg\n----------\nDo you want to send it?"
+    assert msg == expected
+
+
+def test_get_broadcast_msg_from_preview():
+    preview_msg = "Broadcast message preview:\n----------\ntest msg\n----------\nDo you want to send it?"
+    msg = utils.get_broadcast_msg_from_preview(preview_msg)
+    expected = "test msg"
+    return msg == expected

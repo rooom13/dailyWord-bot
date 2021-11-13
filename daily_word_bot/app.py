@@ -1,9 +1,13 @@
+from functools import wraps
 import typing
 import logging
 from datetime import datetime
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
+from telegram.ext import (Updater,
+                          CommandHandler, CallbackQueryHandler, ConversationHandler, MessageHandler,
+                          CallbackContext,
+                          Filters)
 
 from daily_word_bot.config import config
 from daily_word_bot import utils
@@ -32,7 +36,34 @@ user_bot_commands = [
 available_commands_msg = utils.build_available_commands_msg(user_bot_commands)
 
 
+def admin_only(func):  # pragma: no cover
+    """If current user is not admin, don't execute the method & send admin msg"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        update = args[1]
+        if self.is_admin(update.effective_message.chat.id):
+            return func(*args, **kwargs)
+        else:
+            update.effective_message.reply_text(self.admin_msg, parse_mode='HTML')
+    return wrapper
+
+
+class States:
+    BROADCAST_TYPE = 0
+    BROADCAST_CONFIRM = 1
+
+
+class Buttons:
+    cancel = [[InlineKeyboardButton("/cancel", callback_data="/cancel")]]
+
+
 class App:
+
+    ####################
+    # Common msgs      #
+    ####################
+    admin_msg = "This command is reserved for <pre>admins</pre> 😏😏"
 
     def callback_on_info(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         msg = f"Version: {config.VERSION} deployed on {self.start_date}"
@@ -41,13 +72,35 @@ class App:
     def on_help_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         update.message.reply_text(available_commands_msg)
 
+    @admin_only
     def on_users_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
-        if str(update.message.chat_id) == config.ADMIN_CHAT_ID:
-            users = list(self.dao.get_all_users())
-            msg = utils.build_users_msg(users)
-        else:
-            msg = "Loitering around my github?\nDon't hesitate greeting me! 😀"
+        users = list(self.dao.get_all_users())
+        msg = utils.build_users_msg(users)
         update.message.reply_text(msg)
+
+    @admin_only
+    def callback_on_broadcast(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
+        msg = "Type the message you wanna broadcast:"
+        update.effective_message.reply_text(msg, reply_markup=InlineKeyboardMarkup(Buttons.cancel))
+        return States.BROADCAST_TYPE
+
+    @admin_only
+    def callback_on_broadcast_confirm(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
+        msg = utils.build_broadcast_preview_msg(update.message.text)
+        update.effective_message.reply_text(msg, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Send", callback_data="/broadcast_send"), (Buttons.cancel[0][0])]]
+        ))
+        return States.BROADCAST_CONFIRM
+
+    @admin_only
+    def callback_on_broadcast_send(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
+        update.callback_query.answer()
+        msg = utils.get_broadcast_msg_from_preview(update.callback_query.message.text)
+        users = self.dao.get_all_active_users()
+        for user in users:
+            chat_id = user["chatId"]
+            context.bot.send_message(chat_id=chat_id, text=msg, parse_mode='HTML')
+        return ConversationHandler.END
 
     def on_start_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
         message = update.message or update.callback_query.message
@@ -191,6 +244,12 @@ class App:
             level_to_add = args[0]
             self.on_addlevel_callback(update, context, level_to_add, is_inline_keyboard=True)
 
+    def callback_on_cancel(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
+        update.callback_query and update.callback_query.answer()
+        msg = "Cancelled."
+        update.effective_message.reply_text(msg)
+        return ConversationHandler.END
+
     def send_word(self, context: CallbackContext):  # pragma: no cover
         users = self.dao.get_all_active_users()
         logger.info(f"sending words to {len(users)} users")
@@ -211,6 +270,10 @@ class App:
                 context.bot.send_message(chat_id=chat_id, text=msg, parse_mode='HTML', reply_markup=reply_markup)
             except Exception as e:
                 logger.error("shit", exc_info=e)
+
+    @staticmethod
+    def is_admin(chat_id: str):
+        return str(chat_id) in [config.ADMIN_CHAT_ID]
 
     def __init__(self):
         self.start_date = datetime.now()
@@ -248,7 +311,28 @@ class App:
         dispatcher.add_handler(CommandHandler("info", self.on_info_callback))
         dispatcher.add_handler(CommandHandler("blockedwords", self.on_get_blockwords_callback))
         dispatcher.add_handler(CommandHandler("mylevels", self.on_mylevels_callback))
-        dispatcher.add_handler(CallbackQueryHandler(self.inline_keyboard_callbacks))
+        # TODO: split inline_keyboard_callbacks in separate callback_queries
+        dispatcher.add_handler(CallbackQueryHandler(self.inline_keyboard_callbacks, pattern=r"^(?!/cancel|/broadcast_send).*"))
+
+        broadcast_handler = ConversationHandler(
+            entry_points=[
+                CommandHandler("broadcast", self.callback_on_broadcast),
+            ],
+            states={
+                States.BROADCAST_TYPE: [
+                    MessageHandler(Filters.regex("^(?!/).*"), self.callback_on_broadcast_confirm)
+                ],
+                States.BROADCAST_CONFIRM: [
+                    CallbackQueryHandler(self.callback_on_broadcast_send, pattern=r"\/broadcast_send")
+                ],
+            },
+            fallbacks=[
+                CommandHandler("cancel", self.callback_on_cancel),
+                CallbackQueryHandler(self.callback_on_cancel, pattern=r"\/cancel")
+            ],
+        )
+
+        dispatcher.add_handler(broadcast_handler)
 
         self.updater.start_polling()
         self.updater.idle()
