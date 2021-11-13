@@ -6,6 +6,7 @@ import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
 from gspread import Spreadsheet, Worksheet
+from daily_word_bot import utils
 
 
 class WordBank:
@@ -46,12 +47,13 @@ class WordBank:
         self.df = df
         self.last_updated_at = str(datetime.now())
 
-    def get_random(self, exclude: list = [], levels: list = []) -> dict:
+    def get_random(self, exclude: list = [], levels: list = utils.POSSIBLE_USER_LEVELS) -> dict:
         """Get a random word excluding the provided ones and taking into account the user levels"""
         if len(exclude) >= len(self.df.index):
             exclude = []
 
-        df_candidates = self.df.loc[(~self.df.index.isin(exclude)) & (self.df['level'].isin(levels))]
+        # if word level is empty it means it belongs to all levels
+        df_candidates = self.df.loc[(~self.df.index.isin(exclude)) & ((self.df['level'].isin(levels)) | (self.df['level'] == ''))]
 
         if len(df_candidates.index) == 0:
             return {}
