@@ -3,6 +3,7 @@ import redis
 import json
 
 from telegram import Message
+from daily_word_bot import utils
 
 
 class DAO:
@@ -11,7 +12,7 @@ class DAO:
         port: int = 6379
         self.r: redis.Redis = redis.Redis(host=host, port=port)
 
-    def save_user(self, message: Message, user_levels: list = []):
+    def save_user(self, message: Message, user_levels: list = utils.POSSIBLE_USER_LEVELS):
         chat_id: str = message.chat.id
         name: str = message.chat.first_name
         self.r.sadd("users", chat_id)
@@ -23,9 +24,12 @@ class DAO:
         ))
         self.r.set(f"userInfo:{chat_id}", user_info)
 
-    def set_user_inactive(self, message: Message, user_levels: list = []):
+    def set_user_inactive(self, message: Message):
         chat_id: str = message.chat.id
         name: str = message.chat.first_name
+        # get user levels if exist
+        levels: list = self.get_user_levels(chat_id)
+        user_levels: list = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
 
         user_info = json.dumps(dict(
             name=name,
@@ -67,22 +71,22 @@ class DAO:
 
     def get_user_levels(self, chat_id) -> typing.List[str]:
         user_info = self.get_user(chat_id)
-        user_levels = user_info["levels"] if "levels" in user_info else []
+        user_levels = user_info.get("levels", [])
         return user_levels
 
     def remove_user_level(self, chat_id, level) -> None:
         user_info = self.get_user(chat_id)
-        levels = user_info["levels"]
+        levels = user_info.get("levels", [])
         levels.remove(level)
-        user_info["levels"] = levels
+        user_info.update({"levels": levels})
         user_info = json.dumps(user_info)
         self.r.set(f"userInfo:{chat_id}", user_info)
 
     def add_user_level(self, chat_id, level) -> None:
         user_info = self.get_user(chat_id)
-        levels = user_info["levels"]
+        levels = user_info.get("levels", [])
         levels.append(level)
-        user_info["levels"] = levels
+        user_info.update({"levels": levels})
         user_info = json.dumps(user_info)
         self.r.set(f"userInfo:{chat_id}", user_info)
 

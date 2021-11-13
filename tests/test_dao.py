@@ -52,7 +52,7 @@ def test_set_user_inactive():
     active_users = dao.get_all_active_users()
     tc.assertIn(dict(test_user_info, chatId=chat_id), active_users)
 
-    dao.set_user_inactive(message, user_levels)
+    dao.set_user_inactive(message)
     active_users = dao.get_all_active_users()
     tc.assertEqual([], active_users)
 
