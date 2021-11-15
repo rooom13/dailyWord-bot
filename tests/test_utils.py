@@ -1,6 +1,6 @@
 import pytest
 import unittest
-from telegram import BotCommand
+from telegram import BotCommand, InlineKeyboardButton
 
 from daily_word_bot import utils
 
@@ -87,13 +87,19 @@ def test_build_users_msg():
                    "\n- aChatId2 pinxulino 😴")
 
 
-def test_get_level_from_command():
-    # normal case
-    test_command = '/addorremovelevel beginner'
-    extracted_level_1 = utils.get_level_from_command(test_command)
-    tc.assertEqual(extracted_level_1, 'beginner')
+def test_build_levels_answer():
+    expected_msg = "🛠 Choose the level of the words to be sent.\nClick ☐ to add or click ☑ to remove one. 🛠\n\nThese are your word levels: "
+    expectd_inline_keyboard_buttons = []
+    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('☑ beginner', callback_data='/removelevel beginner')])
+    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('☐ advanced', callback_data='/addlevel advanced')])
+    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('☐ intermediate', callback_data='/addlevel intermediate')])
 
-    # no parameter case
-    test_command_2 = '/addorremovelevel'
-    extracted_level_2 = utils.get_level_from_command(test_command_2)
-    tc.assertEqual(extracted_level_2, '')
+    answer = utils.build_levels_answer(['beginner'])
+
+    # check the content of th message
+    tc.assertEqual(answer.get('msg'), expected_msg)
+    # check reply_markup content
+    for button in answer.get('reply_markup').inline_keyboard:
+        index = answer.get('reply_markup').inline_keyboard.index(button)
+        tc.assertEqual(button[0].text, expectd_inline_keyboard_buttons[index][0].text)
+        tc.assertEqual(button[0].callback_data, expectd_inline_keyboard_buttons[index][0].callback_data)

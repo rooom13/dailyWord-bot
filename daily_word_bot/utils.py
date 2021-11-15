@@ -18,12 +18,12 @@ def build_levels_answer(user_levels: list) -> dict:
     # create inline keyboard buttons
     inline_keyboard_buttons = []
     for level in user_levels:
-        level_message = '☑ '+ level
+        level_message = '☑ ' + level
         inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/removelevel {level}')])
     # check which are the levels not assigned from the possible ones
     remaining_levels = list(set(POSSIBLE_USER_LEVELS) - set(user_levels))
     for level in remaining_levels:
-        level_message = '☐ '+ level
+        level_message = '☐ ' + level
         inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/addlevel {level}')])
     # reply markup answer object
     reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)

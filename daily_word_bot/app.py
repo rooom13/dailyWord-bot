@@ -69,7 +69,6 @@ class App:
 
     def on_stop_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
         message = update.message or update.callback_query.message
-        chat_id = message.chat_id
         self.dao.set_user_inactive(message)
 
         msg = "You will no longer receive words!\n...Unles you use /start"
@@ -115,8 +114,8 @@ class App:
 
         # look for the levels of the user in the db
         levels = self.dao.get_user_levels(chat_id)
-        
-         # generate answer message and the markup
+
+        # generate answer message and the markup
         answer = utils.build_levels_answer(levels)
 
         # answer the user
@@ -135,7 +134,7 @@ class App:
         # look for the levels of the user in the db
         levels = self.dao.get_user_levels(chat_id)
 
-         # generate answer message and the markup
+        # generate answer message and the markup
         answer = utils.build_levels_answer(levels)
 
         # answer the user
@@ -150,10 +149,10 @@ class App:
         chat_id = message.chat_id
 
         self.dao.add_user_level(chat_id, level_to_add)
-        
+
         # look for the levels of the user in the db
         levels = self.dao.get_user_levels(chat_id)
-        
+
         # generate answer message and the markup
         answer = utils.build_levels_answer(levels)
 
