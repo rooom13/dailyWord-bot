@@ -1,6 +1,6 @@
 import re
 import typing
-from telegram import BotCommand
+from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 from daily_word_bot import utils
 
@@ -11,18 +11,24 @@ def highlight(w: str) -> str:
     return f"<b>{w}</b>"
 
 
-def get_level_from_command(command: str) -> str:
-    # variable to store the extracted level from the command
-    extracted_level = ''
+def build_levels_answer(user_levels: list) -> dict:
+    # build the message and send it back to the user
+    msg = "🛠 Choose the level of the words to be sent.\nClick ☐ to add or click ☑ to remove one. 🛠\n\nThese are your word levels: "
 
-    # command parts sent by the user
-    command_parts = command.split(maxsplit=1)
+    # create inline keyboard buttons
+    inline_keyboard_buttons = []
+    for level in user_levels:
+        level_message = '☑ '+ level
+        inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/removelevel {level}')])
+    # check which are the levels not assigned from the possible ones
+    remaining_levels = list(set(POSSIBLE_USER_LEVELS) - set(user_levels))
+    for level in remaining_levels:
+        level_message = '☐ '+ level
+        inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/addlevel {level}')])
+    # reply markup answer object
+    reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
 
-    # check result of the split
-    if len(command_parts) == 2:  # if user specified a level
-        extracted_level = command_parts[1]
-
-    return extracted_level
+    return {'msg': msg, 'reply_markup': reply_markup}
 
 
 def get_terms_without_articles(terms: str) -> typing.List[str]:

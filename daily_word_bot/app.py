@@ -26,7 +26,7 @@ user_bot_commands = [
     BotCommand("/start", "Starts sending words"),
     BotCommand("/stop", "Stops sending words"),
     BotCommand("/blockedwords", "Shows your blocked words"),
-    BotCommand("/mylevels", "Shows the level of the words you want to be sent: beginner, intermediate or advanced")
+    BotCommand("/mylevels", "Shows your preferred levels of the words to be sent. Possible word levels are: beginner, intermediate and advanced")
 ]
 
 available_commands_msg = utils.build_available_commands_msg(user_bot_commands)
@@ -112,27 +112,18 @@ class App:
         # get user information from the message
         message = update.message or update.callback_query.message
         chat_id = message.chat_id
+
         # look for the levels of the user in the db
         levels = self.dao.get_user_levels(chat_id)
-        # build the message and send it back to the user
-        msg = "Click ➕ to add or click ❌ to remove the level.\nThese are the levels of the words you want to receive: "
-        # create inline keyboard buttons
-        inline_keyboard_buttons = []
-        for level in levels:
-            level_message = '❌ '+ level
-            inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/removelevel {level}')])
-        # check if user has not levels assigned
-        remaining_levels = list(set(utils.POSSIBLE_USER_LEVELS) - set(levels))
-        for level in remaining_levels:
-            level_message = '➕ '+ level
-            inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/addlevel {level}')])
-        # reply markup answer object
-        reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
+        
+         # generate answer message and the markup
+        answer = utils.build_levels_answer(levels)
+
         # answer the user
         if is_inline_keyboard:
-            update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
+            update.callback_query.edit_message_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
         else:
-            update.message.reply_text(msg, reply_markup=reply_markup)
+            update.message.reply_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
 
     def on_removelevel_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False, level_to_remove='') -> None:  # pragma: no cover
         # get user information from the message
@@ -143,26 +134,15 @@ class App:
 
         # look for the levels of the user in the db
         levels = self.dao.get_user_levels(chat_id)
-        # build the message and send it back to the user
-        msg = "Click ➕ to add or click ❌ to remove the level.\nThese are the levels of the words you want to receive: "
 
-        # create inline keyboard buttons
-        inline_keyboard_buttons = []
-        for level in levels:
-            level_message = '❌ '+ level
-            inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/removelevel {level}')])
-        # check if user has not levels assigned
-        remaining_levels = list(set(utils.POSSIBLE_USER_LEVELS) - set(levels))
-        for level in remaining_levels:
-            level_message = '➕ '+ level
-            inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/addlevel {level}')])
-        # reply markup answer object
-        reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
+         # generate answer message and the markup
+        answer = utils.build_levels_answer(levels)
+
         # answer the user
         if is_inline_keyboard:
-            update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
+            update.callback_query.edit_message_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
         else:
-            update.message.reply_text(msg, reply_markup=reply_markup)
+            update.message.reply_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
 
     def on_addlevel_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False, level_to_add='') -> None:  # pragma: no cover
         # get user information from the message
@@ -173,26 +153,15 @@ class App:
         
         # look for the levels of the user in the db
         levels = self.dao.get_user_levels(chat_id)
-        # build the message and send it back to the user
-        msg = "Click ➕ to add or click ❌ to remove the level.\nThese are the levels of the words you want to receive: "
+        
+        # generate answer message and the markup
+        answer = utils.build_levels_answer(levels)
 
-        # create inline keyboard buttons
-        inline_keyboard_buttons = []
-        for level in levels:
-            level_message = '❌ '+ level
-            inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/removelevel {level}')])
-        # check if user has not levels assigned
-        remaining_levels = list(set(utils.POSSIBLE_USER_LEVELS) - set(levels))
-        for level in remaining_levels:
-            level_message = '➕ '+ level
-            inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/addlevel {level}')])
-        # reply markup answer object
-        reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
         # answer the user
         if is_inline_keyboard:
-            update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
+            update.callback_query.edit_message_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
         else:
-            update.message.reply_text(msg, reply_markup=reply_markup)
+            update.message.reply_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
 
     def on_info_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         msg = f"""Version: <i>{config.VERSION}</i> deployed on {self.start_date}
