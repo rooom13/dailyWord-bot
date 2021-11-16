@@ -54,7 +54,7 @@ class App:
         chat_id = message.chat_id
         # check if user already has levels assigned
         levels = self.dao.get_user_levels(chat_id)
-        user_levels = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
+        user_levels = levels if levels else utils.POSSIBLE_USER_LEVELS
         self.dao.save_user(message, user_levels)
 
         msg = f"Hello {message.chat.first_name}! " + available_commands_msg
@@ -124,43 +124,27 @@ class App:
         else:
             update.message.reply_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
 
-    def on_removelevel_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False, level_to_remove='') -> None:  # pragma: no cover
+    def on_removelevel_callback(self, update: Update, context: CallbackContext, level_to_remove: str, is_inline_keyboard=False) -> None:  # pragma: no cover
         # get user information from the message
         message = update.message or update.callback_query.message
         chat_id = message.chat_id
 
+        # remove level from the user
         self.dao.remove_user_level(chat_id, level_to_remove)
 
-        # look for the levels of the user in the db
-        levels = self.dao.get_user_levels(chat_id)
+        # show user levels
+        self.on_mylevels_callback(update, context, is_inline_keyboard)
 
-        # generate answer message and the markup
-        answer = utils.build_levels_answer(levels)
-
-        # answer the user
-        if is_inline_keyboard:
-            update.callback_query.edit_message_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
-        else:
-            update.message.reply_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
-
-    def on_addlevel_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False, level_to_add='') -> None:  # pragma: no cover
+    def on_addlevel_callback(self, update: Update, context: CallbackContext, level_to_add: str, is_inline_keyboard=False) -> None:  # pragma: no cover
         # get user information from the message
         message = update.message or update.callback_query.message
         chat_id = message.chat_id
 
+        # add level to the user
         self.dao.add_user_level(chat_id, level_to_add)
 
-        # look for the levels of the user in the db
-        levels = self.dao.get_user_levels(chat_id)
-
-        # generate answer message and the markup
-        answer = utils.build_levels_answer(levels)
-
-        # answer the user
-        if is_inline_keyboard:
-            update.callback_query.edit_message_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
-        else:
-            update.message.reply_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
+        # show user levels
+        self.on_mylevels_callback(update, context, is_inline_keyboard)
 
     def on_info_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         msg = f"""Version: <i>{config.VERSION}</i> deployed on {self.start_date}
@@ -201,10 +185,10 @@ class App:
             self.on_get_blockwords_callback(update, context, is_inline_keyboard=True)
         elif command == '/removelevel':
             level_to_remove = args[0]
-            self.on_removelevel_callback(update, context, is_inline_keyboard=True, level_to_remove=level_to_remove)
+            self.on_removelevel_callback(update, context, level_to_remove, is_inline_keyboard=True)
         elif command == '/addlevel':
             level_to_add = args[0]
-            self.on_addlevel_callback(update, context, is_inline_keyboard=True, level_to_add=level_to_add)
+            self.on_addlevel_callback(update, context, level_to_add, is_inline_keyboard=True)
 
     def send_word(self, context: CallbackContext):  # pragma: no cover
         users = self.dao.get_all_active_users()
@@ -216,12 +200,8 @@ class App:
                 exclude = self.dao.get_user_blocked_words(chat_id)
                 levels = self.dao.get_user_levels(chat_id)
                 word_data = self.word_bank.get_random(exclude=exclude, levels=levels)
-                msg: str = ''
 
-                if not word_data:
-                    msg = 'Du hast alles gelernt! - ¡Te lo has aprendido todo!'
-                else:
-                    msg = utils.build_word_msg(word_data)
+                msg: str = utils.build_word_msg(word_data) if word_data else 'Du hast alles gelernt! - ¡Te lo has aprendido todo!'
 
                 reply_markup = InlineKeyboardMarkup([
                     [InlineKeyboardButton("Gelernt! - ¡Aprendida!", callback_data=f"/blockword {word_data['word_id']}")]

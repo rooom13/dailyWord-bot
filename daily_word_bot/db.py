@@ -3,7 +3,6 @@ import redis
 import json
 
 from telegram import Message
-from daily_word_bot import utils
 
 
 class DAO:
@@ -12,7 +11,7 @@ class DAO:
         port: int = 6379
         self.r: redis.Redis = redis.Redis(host=host, port=port)
 
-    def save_user(self, message: Message, user_levels: list = utils.POSSIBLE_USER_LEVELS):
+    def save_user(self, message: Message, user_levels: list):
         chat_id: str = message.chat.id
         name: str = message.chat.first_name
         self.r.sadd("users", chat_id)
@@ -29,12 +28,11 @@ class DAO:
         name: str = message.chat.first_name
         # get user levels if exist
         levels: list = self.get_user_levels(chat_id)
-        user_levels: list = levels if len(levels) > 0 else utils.POSSIBLE_USER_LEVELS
 
         user_info = json.dumps(dict(
             name=name,
             isActive=False,
-            levels=user_levels
+            levels=levels
         ))
         self.r.set(f"userInfo:{chat_id}", user_info)
 

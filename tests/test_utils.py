@@ -91,8 +91,8 @@ def test_build_levels_answer():
     expected_msg = "🛠 Choose the level of the words to be sent.\nClick ☐ to add or click ☑ to remove one. 🛠\n\nThese are your word levels: "
     expectd_inline_keyboard_buttons = []
     expectd_inline_keyboard_buttons.append([InlineKeyboardButton('☑ beginner', callback_data='/removelevel beginner')])
-    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('☐ advanced', callback_data='/addlevel advanced')])
     expectd_inline_keyboard_buttons.append([InlineKeyboardButton('☐ intermediate', callback_data='/addlevel intermediate')])
+    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('☐ advanced', callback_data='/addlevel advanced')])
 
     answer = utils.build_levels_answer(['beginner'])
 
