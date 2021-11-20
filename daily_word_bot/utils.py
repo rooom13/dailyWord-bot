@@ -36,17 +36,17 @@ def get_levels_tuple_list(user_levels: list) -> list:
 
 def build_levels_answer(user_levels: list) -> dict:
     # build the message and send it back to the user
-    msg = "🛠 Choose the level of the words to be sent.\nClick ☐ to add or click ☑ to remove one. 🛠\n\nThese are your word levels: "
+    msg = "🛠 Choose the level of the words to be sent.\nClick the empty checkbox ⬜️ to assign or the filled one ✅ to unassign a level. 🛠\n\nThese are your word levels: "
 
     # create inline keyboard buttons
     inline_keyboard_buttons = []
     levels_tuple_list = get_levels_tuple_list(user_levels)
     for level in levels_tuple_list:
         if(level[1] == LEVEL_UNASSIGNED):
-            level_message = '☐ ' + level[0]
+            level_message = '⬜️ ' + level[0]
             inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/addlevel {level[0]}')])
         else:
-            level_message = '☑ ' + level[0]
+            level_message = '✅ ' + level[0]
             inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/removelevel {level[0]}')])
 
     # reply markup answer object
