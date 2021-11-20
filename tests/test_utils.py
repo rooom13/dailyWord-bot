@@ -87,6 +87,15 @@ def test_build_users_msg():
                    "\n- aChatId2 pinxulino 😴")
 
 
+def test_get_levels_tuple_list():
+    user_levels: list = ['beginner']
+    expected_list: list = [('advanced', utils.LEVEL_UNASSIGNED), ('beginner', utils.LEVEL_ASSIGNED), ('intermediate', utils.LEVEL_UNASSIGNED)]
+
+    levels_tuple_list = utils.get_levels_tuple_list(user_levels)
+
+    tc.assertEqual(expected_list, levels_tuple_list)
+
+
 def test_build_levels_answer():
     expected_msg = "🛠 Choose the level of the words to be sent.\nClick ☐ to add or click ☑ to remove one. 🛠\n\nThese are your word levels: "
     expectd_inline_keyboard_buttons = []

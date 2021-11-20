@@ -13,7 +13,7 @@ def highlight(w: str) -> str:
     return f"<b>{w}</b>"
 
 
-def get_tuple_list(user_levels: list) -> list:
+def get_levels_tuple_list(user_levels: list) -> list:
     # variables needed for the method
     levels_tuple_list = []
     remaining_levels = list(set(POSSIBLE_USER_LEVELS) - set(user_levels))
@@ -40,7 +40,7 @@ def build_levels_answer(user_levels: list) -> dict:
 
     # create inline keyboard buttons
     inline_keyboard_buttons = []
-    levels_tuple_list = get_tuple_list(user_levels)
+    levels_tuple_list = get_levels_tuple_list(user_levels)
     for level in levels_tuple_list:
         if(level[1] == LEVEL_UNASSIGNED):
             level_message = '☐ ' + level[0]
