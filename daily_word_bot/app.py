@@ -199,7 +199,7 @@ class App:
                 chat_id = user["chatId"]
                 exclude = self.dao.get_user_blocked_words(chat_id)
                 levels = self.dao.get_user_levels(chat_id)
-                word_data = self.word_bank.get_random(exclude=exclude, levels=levels)
+                word_data = self.word_bank.get_random(levels, exclude=exclude)
 
                 msg: str = utils.build_word_msg(word_data) if word_data else 'Du hast alles gelernt! - ¡Te lo has aprendido todo!'
 

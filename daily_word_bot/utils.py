@@ -12,6 +12,7 @@ LEVEL_UNASSIGNED: int = 0
 def highlight(w: str) -> str:
     return f"<b>{w}</b>"
 
+
 def get_tuple_list(user_levels: list) -> list:
     # variables needed for the method
     levels_tuple_list = []
@@ -22,7 +23,7 @@ def get_tuple_list(user_levels: list) -> list:
         if remaining_levels:
             level = remaining_levels.pop()
             levels_tuple_list.append((level, LEVEL_UNASSIGNED))
-        
+
         if user_levels:
             level = user_levels.pop()
             levels_tuple_list.append((level, LEVEL_ASSIGNED))
@@ -47,7 +48,7 @@ def build_levels_answer(user_levels: list) -> dict:
         else:
             level_message = '☑ ' + level[0]
             inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/removelevel {level[0]}')])
-    
+
     # reply markup answer object
     reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
 
