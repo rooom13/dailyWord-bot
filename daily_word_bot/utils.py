@@ -5,33 +5,10 @@ from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 from daily_word_bot import utils
 
 POSSIBLE_USER_LEVELS: list = ['beginner', 'intermediate', 'advanced']
-LEVEL_ASSIGNED: int = 1
-LEVEL_UNASSIGNED: int = 0
 
 
 def highlight(w: str) -> str:
     return f"<b>{w}</b>"
-
-
-def get_levels_tuple_list(user_levels: list) -> list:
-    # variables needed for the method
-    levels_tuple_list = []
-    remaining_levels = list(set(POSSIBLE_USER_LEVELS) - set(user_levels))
-
-    # compute tuple levels list (level, ASSIGNATION_FLAG)
-    while remaining_levels or user_levels:
-        if remaining_levels:
-            level = remaining_levels.pop()
-            levels_tuple_list.append((level, LEVEL_UNASSIGNED))
-
-        if user_levels:
-            level = user_levels.pop()
-            levels_tuple_list.append((level, LEVEL_ASSIGNED))
-
-    # sort the list
-    levels_tuple_list.sort()
-
-    return levels_tuple_list
 
 
 def build_levels_answer(user_levels: list) -> dict:
@@ -40,14 +17,13 @@ def build_levels_answer(user_levels: list) -> dict:
 
     # create inline keyboard buttons
     inline_keyboard_buttons = []
-    levels_tuple_list = get_levels_tuple_list(user_levels)
-    for level in levels_tuple_list:
-        if(level[1] == LEVEL_UNASSIGNED):
-            level_message = '⬜️ ' + level[0]
-            inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/addlevel {level[0]}')])
+    for level in POSSIBLE_USER_LEVELS:
+        if(level not in user_levels):
+            level_message = '⬜️ ' + level
+            inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/addlevel {level}')])
         else:
-            level_message = '✅ ' + level[0]
-            inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/removelevel {level[0]}')])
+            level_message = '✅ ' + level
+            inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=f'/removelevel {level}')])
 
     # reply markup answer object
     reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)

@@ -1,6 +1,6 @@
 import pytest
 import unittest
-from telegram import BotCommand, InlineKeyboardButton
+from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 from daily_word_bot import utils
 
@@ -87,28 +87,20 @@ def test_build_users_msg():
                    "\n- aChatId2 pinxulino 😴")
 
 
-def test_get_levels_tuple_list():
-    user_levels: list = ['beginner']
-    expected_list: list = [('advanced', utils.LEVEL_UNASSIGNED), ('beginner', utils.LEVEL_ASSIGNED), ('intermediate', utils.LEVEL_UNASSIGNED)]
-
-    levels_tuple_list = utils.get_levels_tuple_list(user_levels)
-
-    tc.assertEqual(expected_list, levels_tuple_list)
-
-
 def test_build_levels_answer():
     expected_msg = "🛠 Choose the level of the words to be sent.\nClick the empty checkbox ⬜️ to assign or the filled one ✅ to unassign a level. 🛠\n\nThese are your word levels: "
     expectd_inline_keyboard_buttons = []
+    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('✅ intermediate', callback_data='/removelevel intermediate')])
     expectd_inline_keyboard_buttons.append([InlineKeyboardButton('⬜️ advanced', callback_data='/addlevel advanced')])
-    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('✅ beginner', callback_data='/removelevel beginner')])
-    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('⬜️ intermediate', callback_data='/addlevel intermediate')])
+    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('⬜️ beginner', callback_data='/addlevel beginner')])
+    expected_reply_markup = InlineKeyboardMarkup(expectd_inline_keyboard_buttons)
 
-    answer = utils.build_levels_answer(['beginner'])
+    answer = utils.build_levels_answer(['intermediate'])
 
     # check the content of th message
     tc.assertEqual(answer.get('msg'), expected_msg)
     # check reply_markup content
     for button in answer.get('reply_markup').inline_keyboard:
         index = answer.get('reply_markup').inline_keyboard.index(button)
-        tc.assertEqual(button[0].text, expectd_inline_keyboard_buttons[index][0].text)
-        tc.assertEqual(button[0].callback_data, expectd_inline_keyboard_buttons[index][0].callback_data)
+        tc.assertEqual(button[0].text, expected_reply_markup.inline_keyboard[index][0].text)
+        tc.assertEqual(button[0].callback_data, expected_reply_markup.inline_keyboard[index][0].callback_data)

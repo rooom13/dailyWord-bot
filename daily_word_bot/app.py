@@ -117,12 +117,13 @@ class App:
 
         # generate answer message and the markup
         answer = utils.build_levels_answer(levels)
+        msg, reply_markup = answer.get('msg'), answer.get('reply_markup')
 
         # answer the user
         if is_inline_keyboard:
-            update.callback_query.edit_message_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
+            update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
         else:
-            update.message.reply_text(answer.get('msg'), reply_markup=answer.get('reply_markup'))
+            update.message.reply_text(msg, reply_markup=reply_markup)
 
     def on_removelevel_callback(self, update: Update, context: CallbackContext, level_to_remove: str, is_inline_keyboard=False) -> None:  # pragma: no cover
         # get user information from the message
