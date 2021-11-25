@@ -1,3 +1,4 @@
+import os
 import pytest
 import unittest
 from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
@@ -79,12 +80,12 @@ def test_build_available_commands_msg():
 
 def test_build_users_msg():
     users = [{'name': 'romanito', 'isActive': True, 'chatId': 'aChatId'},
-             {'name': 'pinxulino', 'isActive': False, 'chatId': 'aChatId2'}]
+             {'name': 'pinxulino', 'isActive': False, 'chatId': 'aChatId2', 'levels': ['beginner', "intermediate"]}]
     res = utils.build_users_msg(users)
     tc.assertEqual(res,
                    "Users: (2)"
-                   "\n- aChatId romanito 😀"
-                   "\n- aChatId2 pinxulino 😴")
+                   "\n- aChatId romanito 😀 "
+                   "\n- aChatId2 pinxulino 😴 bi")
 
 
 def test_build_levels_answer():
@@ -117,3 +118,8 @@ def test_get_broadcast_msg_from_preview():
     msg = utils.get_broadcast_msg_from_preview(preview_msg)
     expected = "test msg"
     return msg == expected
+
+
+def test_parse_admin_chat_ids_var():
+    os.environ["ADMIN_CHAT_IDS"] = "111,222"
+    assert utils.parse_admin_chat_ids_var() == ["111", "222"]
