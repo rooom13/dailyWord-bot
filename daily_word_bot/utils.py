@@ -49,6 +49,17 @@ def highlight_in_sentence(s: str, terms: str) -> str:
     return s
 
 
+broadcast_sep = f"\n{'-'*10}\n"
+
+
+def build_broadcast_preview_msg(msg: str) -> str:
+    return f"Broadcast message preview:{broadcast_sep}{msg}{broadcast_sep}Do you want to send it?"
+
+
+def get_broadcast_msg_from_preview(msg: str) -> str:
+    return msg.split(broadcast_sep)[1]
+
+
 def build_word_msg(word_data: dict) -> str:
 
     examples: list = (word_data.get("examples") or [])
