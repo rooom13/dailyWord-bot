@@ -325,7 +325,7 @@ class App:
             day="*",
             # hour="10,18,20",
             # minute="30",
-            second="10,20,30,40,50,0"  # test
+            # second="10,20,30,40,50,0"  # test
         ))
         self.updater.job_queue.run_custom(lambda x: self.word_bank.update(), job_kwargs=dict(
             trigger="cron",
