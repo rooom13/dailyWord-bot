@@ -1,5 +1,6 @@
 from functools import wraps
 import typing
+import traceback
 import logging
 from datetime import datetime
 
@@ -58,6 +59,20 @@ class Buttons:
     cancel = [[InlineKeyboardButton("/cancel", callback_data="/cancel")]]
 
 
+def handle_error_to_admin(func):  # pragma: no cover
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.error("An exception occurred", exc_info=e)
+            exception_str = traceback.format_exc()
+            self.send_message_to_admins(f"An exception occured in <i>{func.__name__}</i>:\n\n<pre>{exception_str}</pre>")
+    return wrapper
+
+
 class App:
 
     ####################
@@ -65,25 +80,25 @@ class App:
     ####################
     admin_msg = "This command is reserved for <pre>admins</pre> 😏😏"
 
-    def callback_on_info(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
-        msg = f"Version: {config.VERSION} deployed on {self.start_date}"
-        update.message.reply_text(msg)
-
+    @handle_error_to_admin
     def on_help_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         update.message.reply_text(available_commands_msg)
 
+    @handle_error_to_admin
     @admin_only
     def on_users_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         users = list(self.dao.get_all_users())
         msg = utils.build_users_msg(users)
         update.message.reply_text(msg)
 
+    @handle_error_to_admin
     @admin_only
     def callback_on_broadcast(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         msg = "Type the message you wanna broadcast:"
         update.effective_message.reply_text(msg, reply_markup=InlineKeyboardMarkup(Buttons.cancel))
         return States.BROADCAST_TYPE
 
+    @handle_error_to_admin
     @admin_only
     def callback_on_broadcast_confirm(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         msg = utils.build_broadcast_preview_msg(update.message.text)
@@ -92,6 +107,7 @@ class App:
         ))
         return States.BROADCAST_CONFIRM
 
+    @handle_error_to_admin
     @admin_only
     def callback_on_broadcast_send(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         update.callback_query.answer()
@@ -102,12 +118,14 @@ class App:
             context.bot.send_message(chat_id=chat_id, text=msg, parse_mode='HTML')
         return ConversationHandler.END
 
-    def on_start_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
-        message = update.message or update.callback_query.message
-        chat_id = message.chat_id
+    @handle_error_to_admin
+    def on_start_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
+        chat_id = update.effective_message.chat.id
         # check if user already has levels assigned
         levels = self.dao.get_user_levels(chat_id)
         user_levels = levels if levels else utils.POSSIBLE_USER_LEVELS
+
+        message = update.message or update.callback_query.message
         self.dao.save_user(message, user_levels)
 
         msg = f"Hello {message.chat.first_name}! " + available_commands_msg
@@ -115,12 +133,14 @@ class App:
             [InlineKeyboardButton("/stop", callback_data='/stop')]
         ])
 
-        if is_inline_keyboard:
+        if update.callback_query:
+            update.callback_query.answer()
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
         else:
-            update.message.reply_text(msg, reply_markup=reply_markup)
+            update.effective_message.reply_text(msg, reply_markup=reply_markup)
 
-    def on_stop_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
+    @handle_error_to_admin
+    def on_stop_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         message = update.message or update.callback_query.message
         self.dao.set_user_inactive(message)
 
@@ -129,12 +149,14 @@ class App:
             [InlineKeyboardButton("/start", callback_data='/start')]
         ])
 
-        if is_inline_keyboard:
+        if update.callback_query:
+            update.callback_query.answer()
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
         else:
-            update.message.reply_text(msg, reply_markup=reply_markup)
+            update.effective_message.reply_text(msg, reply_markup=reply_markup)
 
-    def on_get_blockwords_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
+    @handle_error_to_admin
+    def on_get_blockwords_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         message = update.message or update.callback_query.message
 
         chat_id = message.chat_id
@@ -149,21 +171,21 @@ class App:
             german_word = blocked_word["de"]
             spanish_word = blocked_word["es"]
             spanish_and_german_word = "🇪🇸" + spanish_word + " | " + "🇩🇪" + german_word
-            inline_keyboard_buttons.append([InlineKeyboardButton(spanish_and_german_word, callback_data=f'/unblockword_from_blocked_words {word_id}')])
+            inline_keyboard_buttons.append([InlineKeyboardButton(spanish_and_german_word, callback_data=f'/unblockword_fbw {word_id}')])
 
         reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
 
         msg = "These are your blocked words. Click to unblock them." if inline_keyboard_buttons else "You don't have any blocked words."
 
-        if is_inline_keyboard:
+        if update.callback_query:
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
         else:
             update.message.reply_text(msg, reply_markup=reply_markup)
 
-    def on_mylevels_callback(self, update: Update, context: CallbackContext, is_inline_keyboard=False) -> None:  # pragma: no cover
+    @handle_error_to_admin
+    def on_mylevels_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         # get user information from the message
-        message = update.message or update.callback_query.message
-        chat_id = message.chat_id
+        chat_id = update.effective_message.chat_id
 
         # look for the levels of the user in the db
         levels = self.dao.get_user_levels(chat_id)
@@ -173,77 +195,81 @@ class App:
         msg, reply_markup = answer.get('msg'), answer.get('reply_markup')
 
         # answer the user
-        if is_inline_keyboard:
+        if update.callback_query:
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
         else:
-            update.message.reply_text(msg, reply_markup=reply_markup)
+            update.effective_message.reply_text(msg, reply_markup=reply_markup)
 
-    def on_removelevel_callback(self, update: Update, context: CallbackContext, level_to_remove: str, is_inline_keyboard=False) -> None:  # pragma: no cover
+    @handle_error_to_admin
+    def on_removelevel_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         # get user information from the message
-        message = update.message or update.callback_query.message
-        chat_id = message.chat_id
+        chat_id = update.effective_message.chat.id
+
+        callback_data = update.callback_query.data.split(" ")
+        level = " ".join(callback_data[1:])
 
         # remove level from the user
-        self.dao.remove_user_level(chat_id, level_to_remove)
+        self.dao.remove_user_level(chat_id, level)
 
         # show user levels
-        self.on_mylevels_callback(update, context, is_inline_keyboard)
+        self.on_mylevels_callback(update, context)
 
-    def on_addlevel_callback(self, update: Update, context: CallbackContext, level_to_add: str, is_inline_keyboard=False) -> None:  # pragma: no cover
+    @handle_error_to_admin
+    def on_addlevel_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         # get user information from the message
-        message = update.message or update.callback_query.message
-        chat_id = message.chat_id
+        chat_id = update.effective_message.chat.id
+
+        callback_data = update.callback_query.data.split(" ")
+        level = " ".join(callback_data[1:])
 
         # add level to the user
-        self.dao.add_user_level(chat_id, level_to_add)
+        self.dao.add_user_level(chat_id, level)
 
         # show user levels
-        self.on_mylevels_callback(update, context, is_inline_keyboard)
+        self.on_mylevels_callback(update, context)
 
+    @handle_error_to_admin
     def on_info_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         msg = f"""Version: <i>{config.VERSION}</i> deployed on {self.start_date}
         \nWord bank info:\n - {len(self.word_bank.df.index)} words, last updated on {self.word_bank.last_updated_at}"""
         update.message.reply_text(msg, parse_mode='HTML')
 
-    def inline_keyboard_callbacks(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
-        query = update.callback_query
-        query.answer()
+    @handle_error_to_admin
+    def on_blockword_callback(self, update: Update, context: CallbackContext):  # pragma: no cover
+        update.callback_query.answer()
+        callback_data = update.callback_query.data.split(" ")
+        word_id = " ".join(callback_data[1:])
 
-        callback_data = query.data.split(" ")
-        command = callback_data[0]
-        args = callback_data[1:]
+        self.dao.save_user_blocked_word(update.callback_query.message, word_id)
+        reply_markup = InlineKeyboardMarkup([
+            [InlineKeyboardButton("Zurücknehmen - Deshacer", callback_data=f"/unblockword {word_id}")]
+        ])
+        msg = "✅\n" + update.callback_query.message.text
+        update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
+        update.callback_query.answer()
 
-        if command == "/start":
-            self.on_start_callback(update, context, is_inline_keyboard=True)
-        elif command == "/stop":
-            self.on_stop_callback(update, context, is_inline_keyboard=True)
-        elif command == "/blockword":
-            word_id = args[0]
-            self.dao.save_user_blocked_word(update.callback_query.message, word_id)
-            reply_markup = InlineKeyboardMarkup([
-                [InlineKeyboardButton("Zurücknehmen - Deshacer", callback_data=f"/unblockword {word_id}")]
-            ])
-            msg = "✅\n" + update.callback_query.message.text
-            update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
-        elif command == "/unblockword":
-            word_id = args[0]
-            self.dao.remove_user_blocked_word(update.callback_query.message, word_id)
+    @handle_error_to_admin
+    def on_unblockword_callback(self, update: Update, context: CallbackContext, is_from_blocked_words=False):  # pragma: no cover
+        """Arg is_from_blocked_words indicates whether it was called from the /blockedwords comand. If so,
+        it should show the updated /blockedwords output"""
+
+        update.callback_query.answer()
+        callback_data = update.callback_query.data.split(" ")
+        word_id = " ".join(callback_data[1:])
+
+        self.dao.remove_user_blocked_word(update.callback_query.message, word_id)
+
+        # if called from blocked words, should show the updated blocked words
+        if is_from_blocked_words:
+            return self.on_get_blockwords_callback(update, context)
+        else:
             reply_markup = InlineKeyboardMarkup([
                 [InlineKeyboardButton("Gelernt! - Aprendida!", callback_data=f"/blockword {word_id}")]
             ])
             msg = update.callback_query.message.text[2:]  # remove '✅\n'
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
-        elif command == "/unblockword_from_blocked_words":
-            word_id = args[0]
-            self.dao.remove_user_blocked_word(update.callback_query.message, word_id)
-            self.on_get_blockwords_callback(update, context, is_inline_keyboard=True)
-        elif command == '/removelevel':
-            level_to_remove = args[0]
-            self.on_removelevel_callback(update, context, level_to_remove, is_inline_keyboard=True)
-        elif command == '/addlevel':
-            level_to_add = args[0]
-            self.on_addlevel_callback(update, context, level_to_add, is_inline_keyboard=True)
 
+    @handle_error_to_admin
     def callback_on_cancel(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         update.callback_query and update.callback_query.answer()
         msg = "Cancelled."
@@ -268,12 +294,18 @@ class App:
                 ])
 
                 context.bot.send_message(chat_id=chat_id, text=msg, parse_mode='HTML', reply_markup=reply_markup)
-            except Exception as e:
-                logger.error("shit", exc_info=e)
+            except Exception:
+                exception_str = traceback.format_exc()
+                exception_message = f"An exception occured in <i>callback_chrono_send_top_tweets</i>:\n\n<pre>{exception_str}</pre>"
+                self.send_message_to_admins(exception_message)
+
+    def send_message_to_admins(self, msg: str):  # pragma: no cover
+        for chat_id in config.ADMIN_CHAT_IDS:
+            self.updater.bot.send_message(chat_id=chat_id, text=msg, parse_mode='HTML')
 
     @staticmethod
     def is_admin(chat_id: str):
-        return str(chat_id) in [config.ADMIN_CHAT_ID]
+        return str(chat_id) in config.ADMIN_CHAT_IDS
 
     def __init__(self):
         self.start_date = datetime.now()
@@ -302,20 +334,28 @@ class App:
             # second="10,20,30,40,50,0"  # test
         ))
 
-        dispatcher = self.updater.dispatcher
-
-        dispatcher.add_handler(CommandHandler("start", self.on_start_callback))
-        dispatcher.add_handler(CommandHandler("stop", self.on_stop_callback))
-        dispatcher.add_handler(CommandHandler("help", self.on_help_callback))
-        dispatcher.add_handler(CommandHandler("users", self.on_users_callback))
-        dispatcher.add_handler(CommandHandler("info", self.on_info_callback))
-        dispatcher.add_handler(CommandHandler("blockedwords", self.on_get_blockwords_callback))
-        dispatcher.add_handler(CommandHandler("mylevels", self.on_mylevels_callback))
-        # TODO: split inline_keyboard_callbacks in separate callback_queries
-        dispatcher.add_handler(CallbackQueryHandler(self.inline_keyboard_callbacks, pattern=r"^(?!/cancel|/broadcast_send).*"))
-
         broadcast_handler = ConversationHandler(
             entry_points=[
+                CommandHandler("start", self.on_start_callback),
+                CallbackQueryHandler(self.on_start_callback, pattern=r"\/start"),
+
+                CommandHandler("stop", self.on_stop_callback),
+                CallbackQueryHandler(self.on_stop_callback, pattern=r"\/stop"),
+
+                CommandHandler("blockedwords", self.on_get_blockwords_callback),
+                CallbackQueryHandler(self.on_blockword_callback, pattern=r"\/blockword .*"),
+                CallbackQueryHandler(self.on_unblockword_callback, pattern=r"\/unblockword .*"),
+                # fbw = from blocked words
+                CallbackQueryHandler(lambda u, c: self.on_unblockword_callback(u, c, is_from_blocked_words=True), pattern=r"\/unblockword_fbw .*"),
+
+                CommandHandler("mylevels", self.on_mylevels_callback),
+                CallbackQueryHandler(self.on_addlevel_callback, pattern=r"\/addlevel .*"),
+                CallbackQueryHandler(self.on_removelevel_callback, pattern=r"\/removelevel .*"),
+
+                CommandHandler("help", self.on_help_callback),
+                CommandHandler("info", self.on_info_callback),
+                # admin
+                CommandHandler("users", self.on_users_callback),
                 CommandHandler("broadcast", self.callback_on_broadcast),
             ],
             states={
@@ -332,7 +372,7 @@ class App:
             ],
         )
 
-        dispatcher.add_handler(broadcast_handler)
+        self.updater.dispatcher.add_handler(broadcast_handler)
 
         self.updater.start_polling()
         self.updater.idle()

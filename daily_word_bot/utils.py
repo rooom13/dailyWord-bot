@@ -1,5 +1,6 @@
 import re
-import typing
+import os
+from typing import List
 from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 from daily_word_bot import utils
@@ -33,10 +34,10 @@ def build_levels_answer(user_levels: list) -> dict:
     return {'msg': msg, 'reply_markup': reply_markup}
 
 
-def get_terms_without_articles(terms: str) -> typing.List[str]:
+def get_terms_without_articles(terms: str) -> List[str]:
     # quitar artculos
     regex = r"die |das |der |el |la "
-    terms_without_articles: typing.List[str] = [re.sub(regex, "", t, flags=re.IGNORECASE) for t in terms.split("/")]
+    terms_without_articles: List[str] = [re.sub(regex, "", t, flags=re.IGNORECASE) for t in terms.split("/")]
     return terms_without_articles
 
 
@@ -78,12 +79,24 @@ def build_word_msg(word_data: dict) -> str:
     )
 
 
-def build_available_commands_msg(bot_commands: typing.List[BotCommand]) -> str:
+def build_available_commands_msg(bot_commands: List[BotCommand]) -> str:
     commands_str = "\n".join([f"{c.command} ➜ {c.description}" for c in bot_commands])
     return "Available commands:\n" + commands_str
 
 
-def build_users_msg(users: typing.List[dict]) -> str:
-    users_str = "\n".join(f'- {u.get("chatId")} {u.get("name")} {"😀" if u.get("isActive")  else  "😴"}' for u in users)
-    msg = f"Users: ({len(users)})\n{users_str}"
+def build_users_msg(users: List[dict]) -> str:
+    msg = f"Users: ({len(users)})"
+
+    for u in users:
+
+        chat_id = u.get("chatId")
+        name = u.get("name")
+        is_active = "😀" if u.get("isActive") else "😴"
+        levels = "".join(f"{level[0]}" for level in u.get("levels") or [])
+        msg += f"\n- {chat_id} {name} {is_active} {levels}"
+
     return msg
+
+
+def parse_admin_chat_ids_var() -> List[str]:
+    return (os.getenv("ADMIN_CHAT_IDS") or "").split(",")
