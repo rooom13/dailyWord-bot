@@ -46,12 +46,22 @@ class WordBank:
         self.df = df
         self.last_updated_at = str(datetime.now())
 
-    def get_random(self, exclude: list = []) -> dict:
-        """Get a random word excluding the provided ones"""
+    def get_random(self, levels: list, exclude: list = []) -> dict:
+        """Get a random word excluding the provided ones and taking into account the user levels"""
         if len(exclude) >= len(self.df.index):
             exclude = []
 
-        df_candidates = self.df.loc[~self.df.index.isin(exclude)]
+        # if the user has levels assigned
+        if levels:
+            # if word level is empty it means it belongs to all levels
+            df_candidates = self.df.loc[(~self.df.index.isin(exclude)) & ((self.df['level'].isin(levels)) | (self.df['level'] == ''))]
+        else:
+            # if user has no levels assigned he or she still can get all words
+            df_candidates = self.df.loc[(~self.df.index.isin(exclude))]
+
+        if len(df_candidates.index) == 0:
+            return {}
+
         row = df_candidates.sample().iloc[0]
 
         examples: typing.List[dict] = []

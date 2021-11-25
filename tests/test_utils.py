@@ -1,6 +1,6 @@
 import pytest
 import unittest
-from telegram import BotCommand
+from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 from daily_word_bot import utils
 
@@ -85,3 +85,22 @@ def test_build_users_msg():
                    "Users: (2)"
                    "\n- aChatId romanito 😀"
                    "\n- aChatId2 pinxulino 😴")
+
+
+def test_build_levels_answer():
+    expected_msg = "🛠 Choose the level of the words to be sent.\nClick the empty checkbox ⬜️ to assign or the filled one ✅ to unassign a level. 🛠\n\nThese are your word levels: "
+    expectd_inline_keyboard_buttons = []
+    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('✅ intermediate', callback_data='/removelevel intermediate')])
+    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('⬜️ advanced', callback_data='/addlevel advanced')])
+    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('⬜️ beginner', callback_data='/addlevel beginner')])
+    expected_reply_markup = InlineKeyboardMarkup(expectd_inline_keyboard_buttons)
+
+    answer = utils.build_levels_answer(['intermediate'])
+
+    # check the content of th message
+    tc.assertEqual(answer.get('msg'), expected_msg)
+    # check reply_markup content
+    for button in answer.get('reply_markup').inline_keyboard:
+        index = answer.get('reply_markup').inline_keyboard.index(button)
+        tc.assertEqual(button[0].text, expected_reply_markup.inline_keyboard[index][0].text)
+        tc.assertEqual(button[0].callback_data, expected_reply_markup.inline_keyboard[index][0].callback_data)

@@ -1,12 +1,36 @@
 import re
 import typing
-from telegram import BotCommand
+from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 from daily_word_bot import utils
+
+POSSIBLE_USER_LEVELS: list = ['beginner', 'intermediate', 'advanced']
 
 
 def highlight(w: str) -> str:
     return f"<b>{w}</b>"
+
+
+def build_levels_answer(user_levels: list) -> dict:
+    # build the message and send it back to the user
+    msg = "🛠 Choose the level of the words to be sent.\nClick the empty checkbox ⬜️ to assign or the filled one ✅ to unassign a level. 🛠\n\nThese are your word levels: "
+
+    # create inline keyboard buttons
+    inline_keyboard_buttons = []
+    for level in POSSIBLE_USER_LEVELS:
+        if level not in user_levels:
+            level_message = '⬜️ ' + level
+            callback_data = f'/addlevel {level}'
+        else:
+            level_message = '✅ ' + level
+            callback_data = f'/removelevel {level}'
+
+        inline_keyboard_buttons.append([InlineKeyboardButton(level_message, callback_data=callback_data)])
+
+    # reply markup answer object
+    reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
+
+    return {'msg': msg, 'reply_markup': reply_markup}
 
 
 def get_terms_without_articles(terms: str) -> typing.List[str]:

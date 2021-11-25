@@ -6,11 +6,33 @@ tc = unittest.TestCase()
 
 
 def test_word_bank():
+    # user excludes some words and has all levels assigned
     word_bank = WordBank(local=True, local_path="tests/resources/word_bank.csv")
-    random_word = word_bank.get_random(exclude=["WID1", "WID2", "WID3", "WID4"])
+    random_word = word_bank.get_random(['beginner', 'intermediate', 'advanced'], exclude=["WID1", "WID2", "WID3", "WID4"])
     tc.assertEqual(random_word.get("word_id"), "WID5")
 
-    random_word = word_bank.get_random(exclude=["WID1", "WID2", "WID3", "WID4", "WID5"])
+    # user excludes some words, has only one level assigned, which there are no words for
+    word_bank = WordBank(local=True, local_path="tests/resources/word_bank.csv")
+    random_word = word_bank.get_random(['advanced'], exclude=["WID1", "WID2", "WID3", "WID4"])
+    tc.assertEqual(random_word, {})
+
+    # user excludes some words, has only one level assigned, which there are words for
+    random_word = word_bank.get_random(['intermediate'], exclude=["WID1", "WID2", "WID3", "WID4", "WID5"])
+    tc.assertIn("word_id", random_word)
+    tc.assertIn("es", random_word)
+    tc.assertIn("de", random_word)
+    tc.assertIn("examples", random_word)
+
+    # user excludes no words and has only one level assigned, which there are words for (including a word with no level)
+    random_word = word_bank.get_random(['intermediate'], exclude=[])
+    tc.assertIn("word_id", random_word)
+    tc.assertIn("es", random_word)
+    tc.assertIn("de", random_word)
+    tc.assertIn("examples", random_word)
+    tc.assertTrue("WID1" == random_word.get("word_id") or "WID2" == random_word.get("word_id"))
+
+    # user excludes no words, and has no levels assigned
+    random_word = word_bank.get_random([], exclude=[])
     tc.assertIn("word_id", random_word)
     tc.assertIn("es", random_word)
     tc.assertIn("de", random_word)

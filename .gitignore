@@ -15,3 +15,4 @@ resources/*
 reports/*
 .coverage
 *.rdb
+.vscode/launch.json
