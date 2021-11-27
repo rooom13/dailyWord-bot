@@ -2,8 +2,10 @@ import os
 from distutils.util import strtobool
 from collections import namedtuple
 
+from daily_word_bot import utils
+
 Config = namedtuple("Config", [
-    "ADMIN_CHAT_ID",
+    "ADMIN_CHAT_IDS",
     "BOT_TOKEN",
     "REDIS_HOST",
     "WORD_BANK_LOCAL",
@@ -11,7 +13,7 @@ Config = namedtuple("Config", [
 ])
 
 live_config = Config(
-    ADMIN_CHAT_ID=os.getenv("ADMIN_CHAT_ID"),
+    ADMIN_CHAT_IDS=utils.parse_admin_chat_ids_var(),
     BOT_TOKEN=os.getenv("BOT_TOKEN"),
     REDIS_HOST="redis",
     WORD_BANK_LOCAL=False,
@@ -19,7 +21,7 @@ live_config = Config(
 )
 
 test_config = Config(
-    ADMIN_CHAT_ID=os.getenv("ADMIN_CHAT_ID"),
+    ADMIN_CHAT_IDS=utils.parse_admin_chat_ids_var(),
     BOT_TOKEN=os.getenv("TEST_BOT_TOKEN"),
     REDIS_HOST="localhost",
     WORD_BANK_LOCAL=strtobool(os.getenv("WORD_BANK_LOCAL") or "true"),

@@ -2,6 +2,9 @@
 .mypy_cache
 .pytest_cache
 
+# python
+*.pyc
+
 # credentials
 .env
 *.pem
