@@ -19,22 +19,21 @@ class DAO:
         user_info = json.dumps(dict(
             name=name,
             isActive=True,
+            isBlocked=False,
+            isDeactivated=False,
             levels=user_levels
         ))
         self.r.set(f"userInfo:{chat_id}", user_info)
 
-    def set_user_inactive(self, message: Message):
-        chat_id: str = message.chat.id
-        name: str = message.chat.first_name
-        # get user levels if exist
-        levels: list = self.get_user_levels(chat_id)
+    def set_user_inactive(self, chat_id: str, is_blocked: bool = False, is_deactivated: bool = False):
+        user_info: dict = self.get_user(chat_id)
+        user_info["isActive"] = False
+        if is_blocked:
+            user_info["isBlocked"] = True
+        if is_deactivated:
+            user_info["isDeactivated"] = True
 
-        user_info = json.dumps(dict(
-            name=name,
-            isActive=False,
-            levels=levels
-        ))
-        self.r.set(f"userInfo:{chat_id}", user_info)
+        self.r.set(f"userInfo:{chat_id}", json.dumps(user_info))
 
     def get_user(self, chat_id: str) -> dict:
         user_info = self.r.get(f"userInfo:{chat_id}")
