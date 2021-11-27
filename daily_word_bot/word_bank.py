@@ -40,7 +40,8 @@ class WordBank:
 
             cols_de = df.columns[df.columns.str.startswith("Deutsch")].to_list()
             cols_es = df.columns[df.columns.str.startswith("Spanisch")].to_list()
-            cols = ["word_id"] + cols_de + cols_es
+            cols_level = df.columns[df.columns.str.startswith("level")].to_list()
+            cols = ["word_id"] + cols_level + cols_de + cols_es
 
             df = pd.DataFrame(data, columns=header)[cols].set_index("word_id")
         self.df = df
