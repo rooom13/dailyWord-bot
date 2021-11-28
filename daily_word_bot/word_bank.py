@@ -36,7 +36,6 @@ class WordBank:
 
             data.pop(0)  # discard explanation row
             header = data.pop(0)
-            df = pd.DataFrame(data, columns=header)
             df = pd.DataFrame(data, columns=header).set_index("word_id")
         self.df = df
         self.last_updated_at = str(datetime.now())
