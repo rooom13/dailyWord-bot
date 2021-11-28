@@ -150,6 +150,7 @@ class App:
 
         # answer the user
         if update.callback_query:
+            update.callback_query.answer()
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
         else:
             update.effective_message.reply_text(msg, reply_markup=reply_markup)
@@ -307,11 +308,14 @@ class App:
         levels = self.dao.get_user_levels(chat_id)
         word_data = self.word_bank.get_random(levels, exclude=exclude)
 
-        msg: str = utils.build_word_msg(word_data) if word_data else 'Du hast alles gelernt! - ¡Te lo has aprendido todo!'
-
-        reply_markup = InlineKeyboardMarkup([
-            [InlineKeyboardButton("Gelernt! - ¡Aprendida!", callback_data=f"/blockword {word_data['word_id']}")]
-        ])
+        if word_data:
+            msg = utils.build_word_msg(word_data)
+            reply_markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("Gelernt! - ¡Aprendida!", callback_data=f"/blockword {word_data['word_id']}")]
+            ])
+        else:
+            msg = 'Du hast alles gelernt! - ¡Te lo has aprendido todo!'
+            reply_markup = None
 
         self.send_message_to_user(user, msg, reply_markup=reply_markup)
 

@@ -42,7 +42,11 @@ class WordBank:
 
     def get_random(self, levels: list, exclude: list) -> dict:
         """Get a random word excluding the provided ones and taking into account the user levels"""
-        if exclude is None or len(exclude) >= len(self.df.index):
+        if exclude is None:
+            exclude = []
+
+        # all words exclueded
+        if len(exclude) >= len(self.df.index):
             exclude = []
 
         # if the user has levels assigned
