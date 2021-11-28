@@ -126,10 +126,6 @@ class App:
         user_levels = levels if levels else utils.POSSIBLE_USER_LEVELS
 
         message = update.message or update.callback_query.message
-        chat_id = message.chat_id
-        # check if user already has levels assigned
-        levels = self.dao.get_user_levels(chat_id)
-        user_levels = levels if levels else utils.POSSIBLE_USER_LEVELS
         self.dao.save_user(message, user_levels)
 
         msg = f"Hello {message.chat.first_name}! " + available_commands_msg
