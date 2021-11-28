@@ -1,7 +1,7 @@
 import os
 import pytest
 import unittest
-from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import BotCommand, InlineKeyboardButton
 
 from daily_word_bot import utils
 
@@ -88,23 +88,38 @@ def test_build_users_msg():
                    "\n- aChatId2 pinxulino 😴 bi")
 
 
-def test_build_levels_answer():
+@pytest.mark.parametrize("levels,expected_inline_keyboard_buttons", [
+    (["intermediate"], [
+        [InlineKeyboardButton('⬜️ beginner', callback_data='/addlevel beginner')],
+        [InlineKeyboardButton('✅ intermediate', callback_data='/removelevel intermediate')],
+        [InlineKeyboardButton('⬜️ advanced', callback_data='/addlevel advanced')],
+    ]),
+    (["beginner", "intermediate"], [
+        [InlineKeyboardButton('✅ beginner', callback_data='/removelevel beginner')],
+        [InlineKeyboardButton('✅ intermediate', callback_data='/removelevel intermediate')],
+        [InlineKeyboardButton('⬜️ advanced', callback_data='/addlevel advanced')],
+    ]),
+    (["beginner", "intermediate", "advanced"], [
+        [InlineKeyboardButton('✅ beginner', callback_data='/removelevel beginner')],
+        [InlineKeyboardButton('✅ intermediate', callback_data='/removelevel intermediate')],
+        [InlineKeyboardButton('✅ advanced', callback_data='/removelevel advanced')],
+    ]),
+    ([], [
+        [InlineKeyboardButton('⬜️ beginner', callback_data='/addlevel beginner')],
+        [InlineKeyboardButton('⬜️ intermediate', callback_data='/addlevel intermediate')],
+        [InlineKeyboardButton('⬜️ advanced', callback_data='/addlevel advanced')],
+    ]),
+])
+def test_build_levels_answer(levels, expected_inline_keyboard_buttons):
     expected_msg = "🛠 Choose the level of the words to be sent.\nClick the empty checkbox ⬜️ to assign or the filled one ✅ to unassign a level. 🛠\n\nThese are your word levels: "
-    expectd_inline_keyboard_buttons = []
-    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('✅ intermediate', callback_data='/removelevel intermediate')])
-    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('⬜️ advanced', callback_data='/addlevel advanced')])
-    expectd_inline_keyboard_buttons.append([InlineKeyboardButton('⬜️ beginner', callback_data='/addlevel beginner')])
-    expected_reply_markup = InlineKeyboardMarkup(expectd_inline_keyboard_buttons)
-
-    answer = utils.build_levels_answer(['intermediate'])
-
+    answer = utils.build_levels_answer(levels)
+    msg, reply_markup = answer.get('msg'), answer.get('reply_markup')
     # check the content of th message
-    tc.assertEqual(answer.get('msg'), expected_msg)
+    assert msg == expected_msg
     # check reply_markup content
-    for button in answer.get('reply_markup').inline_keyboard:
-        index = answer.get('reply_markup').inline_keyboard.index(button)
-        tc.assertEqual(button[0].text, expected_reply_markup.inline_keyboard[index][0].text)
-        tc.assertEqual(button[0].callback_data, expected_reply_markup.inline_keyboard[index][0].callback_data)
+    for button, expected_button in zip(reply_markup.inline_keyboard, expected_inline_keyboard_buttons):
+        assert button[0].text == expected_button[0].text
+        assert button[0].callback_data == expected_button[0].callback_data
 
 
 def test_build_broadcast_preview_msg():

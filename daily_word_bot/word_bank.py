@@ -40,9 +40,9 @@ class WordBank:
         self.df = df
         self.last_updated_at = str(datetime.now())
 
-    def get_random(self, levels: list, exclude: list = []) -> dict:
+    def get_random(self, levels: list, exclude: list) -> dict:
         """Get a random word excluding the provided ones and taking into account the user levels"""
-        if len(exclude) >= len(self.df.index):
+        if exclude is None or len(exclude) >= len(self.df.index):
             exclude = []
 
         # if the user has levels assigned

@@ -5,7 +5,7 @@ from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 from daily_word_bot import utils
 
-POSSIBLE_USER_LEVELS: list = ['beginner', 'intermediate', 'advanced']
+POSSIBLE_USER_LEVELS: tuple = ('beginner', 'intermediate', 'advanced')
 
 
 def highlight(w: str) -> str:
@@ -92,8 +92,11 @@ def build_users_msg(users: List[dict]) -> str:
         chat_id = u.get("chatId")
         name = u.get("name")
         is_active = "😀" if u.get("isActive") else "😴"
+        is_blocked = "⛔" if u.get("isBlocked") else ""
+        is_deactivated = "📵" if u.get("isDeactivated") else ""
+
         levels = "".join(f"{level[0]}" for level in u.get("levels") or [])
-        msg += f"\n- {chat_id} {name} {is_active} {levels}"
+        msg += f"\n- {chat_id} {name} {is_active}{is_blocked}{is_deactivated} {levels}"
 
     return msg
 
