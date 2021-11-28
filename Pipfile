@@ -21,6 +21,7 @@ pytest-cov = "*"
 pytest-flake8 = "*"
 fakeredis = "*"
 autopep8 = "*"
+pytest-mock = "*"
 
 [requires]
 python_version = "3.8"
