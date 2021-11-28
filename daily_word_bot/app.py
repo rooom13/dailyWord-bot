@@ -323,18 +323,6 @@ class App:
         for chat_id in config.ADMIN_CHAT_IDS:
             self.updater.bot.send_message(chat_id=chat_id, text=msg, parse_mode='HTML')
 
-    def admin_only(func):  # pragma: no cover
-        """If current user is not admin, don't execute the method & send admin msg"""
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            self = args[0]
-            update = args[1]
-            if self.is_admin(update.effective_message.chat.id):
-                return func(*args, **kwargs)
-            else:
-                update.effective_message.reply_text(self.admin_msg, parse_mode='HTML')
-        return wrapper
-
     @staticmethod
     def is_admin(chat_id: str):
         return str(chat_id) in config.ADMIN_CHAT_IDS
