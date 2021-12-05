@@ -10,6 +10,9 @@ Config = namedtuple("Config", [
     "REDIS_HOST",
     "WORD_BANK_LOCAL",
     "VERSION",
+    "BACKUP_FILE_PATH_IN",
+    "BACKUP_FOLDER_ID_OUT",
+    "BACKUP_FILE_ID_OUT"
 ])
 
 live_config = Config(
@@ -17,7 +20,10 @@ live_config = Config(
     BOT_TOKEN=os.getenv("BOT_TOKEN"),
     REDIS_HOST="redis",
     WORD_BANK_LOCAL=False,
-    VERSION=os.getenv("VERSION")
+    VERSION=os.getenv("VERSION"),
+    BACKUP_FILE_PATH_IN=os.getenv("BACKUP_FILE_PATH_IN"),
+    BACKUP_FOLDER_ID_OUT=os.getenv("BACKUP_FOLDER_ID_OUT"),
+    BACKUP_FILE_ID_OUT=os.getenv("BACKUP_FILE_ID_OUT")
 )
 
 test_config = Config(
@@ -25,7 +31,10 @@ test_config = Config(
     BOT_TOKEN=os.getenv("TEST_BOT_TOKEN"),
     REDIS_HOST="localhost",
     WORD_BANK_LOCAL=strtobool(os.getenv("WORD_BANK_LOCAL") or "true"),
-    VERSION="aVersion"
+    VERSION="aVersion",
+    BACKUP_FILE_PATH_IN=os.getenv("BACKUP_FILE_PATH_IN"),
+    BACKUP_FOLDER_ID_OUT=os.getenv("BACKUP_FOLDER_ID_OUT"),
+    BACKUP_FILE_ID_OUT=os.getenv("BACKUP_FILE_ID_OUT")
 )
 
 config = live_config if (os.getenv("ENV") or "").lower() == "live" else test_config
