@@ -319,6 +319,10 @@ class App:
 
         self.send_message_to_user(user, msg, reply_markup=reply_markup)
 
+    def callback_chrono_backup(self, context: CallbackContext):  # pragma: no cover
+        self.backup_service.backup()
+        logger.info("Backed up!")
+
     def send_message_to_admins(self, msg: str):  # pragma: no cover
         for chat_id in config.ADMIN_CHAT_IDS:
             self.updater.bot.send_message(chat_id=chat_id, text=msg, parse_mode='HTML')
@@ -370,6 +374,12 @@ class App:
             day="*",
             hour="7",
             # second="10,20,30,40,50,0"  # test
+        ))
+
+        # daily backup
+        self.updater.job_queue.run_custom(self.callback_chrono_backup, job_kwargs=dict(
+            trigger="cron",
+            hour="22"
         ))
 
         # Bot conversation flow logic
