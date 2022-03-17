@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.8-slim
 
 RUN pip install pipenv
 
@@ -6,6 +6,7 @@ COPY ./Pipfile ./Pipfile
 COPY ./Pipfile.lock /Pipfile.lock
 
 RUN pipenv install --deploy --system --ignore-pipfile
+RUN pip uninstall pipenv -y
 
 COPY service-account.json .
 
