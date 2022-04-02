@@ -78,16 +78,6 @@ def test_build_available_commands_msg():
                    "\n/command3 ➜ Description3")
 
 
-# def test_build_users_msg():
-#     users = [{'name': 'romanito', 'isActive': True, 'chatId': 'aChatId'},
-#              {'name': 'pinxulino', 'isActive': False, 'chatId': 'aChatId2', 'levels': ['beginner', "intermediate"]}]
-#     res = utils.build_users_msg(users)
-#     tc.assertEqual(res,
-#                    "Users: (2)"
-#                    "\n- aChatId romanito 😀 "
-#                    "\n- aChatId2 pinxulino 😴 bi")
-
-
 def test_build_users_msg():
     users = [
         {'name': 'romanito', 'isActive': True, 'chatId': 'aChatId', 'levels': ['beginner', 'intermediate']},
