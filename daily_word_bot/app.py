@@ -6,7 +6,7 @@ import traceback
 import logging
 from datetime import datetime
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand, ParseMode
 from telegram.error import Unauthorized
 from telegram.ext import (Updater,
                           CommandHandler, CallbackQueryHandler, ConversationHandler, MessageHandler,
@@ -49,7 +49,7 @@ def admin_only(func):  # pragma: no cover
         if self.is_admin(update.effective_message.chat.id):
             return func(*args, **kwargs)
         else:
-            update.effective_message.reply_text(self.admin_msg, parse_mode='HTML')
+            update.effective_message.reply_text(self.admin_msg, parse_mode=ParseMode.HTML)
     return wrapper
 
 
@@ -185,7 +185,7 @@ class App:
     def callback_on_info(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         msg = f"""Version: <i>{config.VERSION}</i> deployed on {self.start_date}
         \nWord bank info:\n - {len(self.word_bank.df.index)} words, last updated on {self.word_bank.last_updated_at}"""
-        update.message.reply_text(msg, parse_mode='HTML')
+        update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
     def callback_on_get_blockwords_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
 
@@ -257,7 +257,7 @@ class App:
     def callback_on_users(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         users = list(self.dao.get_all_users())
         msg = utils.build_users_msg(users)
-        update.message.reply_text(msg, parse_mode='HTML')
+        update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
     @admin_only
     def callback_on_broadcast(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
@@ -268,7 +268,7 @@ class App:
     @admin_only
     def callback_on_broadcast_confirm(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         msg = utils.build_broadcast_preview_msg(update.message.text)
-        update.effective_message.reply_text(msg, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(
+        update.effective_message.reply_text(msg, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton("Send", callback_data="/broadcast_send"), (Buttons.cancel[0][0])]]
         ))
         return States.BROADCAST_CONFIRM
@@ -300,7 +300,7 @@ class App:
     @handle_error_send_user
     def send_message_to_user(self, user: dict, msg: str, reply_markup=None):
         chat_id = user["chatId"]
-        self.updater.bot.send_message(chat_id=chat_id, text=msg, reply_markup=reply_markup, parse_mode='HTML')
+        self.updater.bot.send_message(chat_id=chat_id, text=msg, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
 
     @handle_error_send_user
     def send_user_word(self, user: dict):  # pragma: no cover
@@ -326,7 +326,7 @@ class App:
 
     def send_message_to_admins(self, msg: str):  # pragma: no cover
         for chat_id in config.ADMIN_CHAT_IDS:
-            self.updater.bot.send_message(chat_id=chat_id, text=msg, parse_mode='HTML')
+            self.updater.bot.send_message(chat_id=chat_id, text=msg, parse_mode=ParseMode.HTML)
 
     @staticmethod
     def is_admin(chat_id: str):
