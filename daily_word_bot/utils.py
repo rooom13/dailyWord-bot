@@ -1,5 +1,6 @@
 import re
 import os
+from collections import defaultdict
 from typing import List
 from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -10,6 +11,18 @@ POSSIBLE_USER_LEVELS: tuple = ('beginner', 'intermediate', 'advanced')
 
 def highlight(w: str) -> str:
     return f"<b>{w}</b>"
+
+
+def user_to_string(user: dict) -> str:
+    chat_id = user.get("chatId")
+    name = user.get("name")
+    is_active = "😀" if user.get("isActive") else "😴"
+    is_blocked = "⛔" if user.get("isBlocked") else ""
+    is_deactivated = "📵" if user.get("isDeactivated") else ""
+    is_kicked = "🥾" if user.get("isKicked") else ""
+    levels = "".join(f"{level[0]}" for level in user.get("levels") or [])
+
+    return (f"- {chat_id} {name} {is_active}{is_blocked}{is_deactivated}{is_kicked}" + (f" <i>{levels}</i>" if levels else ""))
 
 
 def build_levels_answer(user_levels: list) -> dict:
@@ -85,18 +98,30 @@ def build_available_commands_msg(bot_commands: List[BotCommand]) -> str:
 
 
 def build_users_msg(users: List[dict]) -> str:
-    msg = f"Users: ({len(users)})"
+
+    users_classified = defaultdict(list)
+
+    # tuple with user classification key & bool function that classifies
+    # note that order matters, that's why 'active' is the last one with a constant True
+    classifications = [
+        ("deactivated", lambda u: u.get("isDeactivated")),
+        ("blocked", lambda u: u.get("isBlocked")),
+        ("kicked", lambda u: u.get("isKicked")),
+        ("stopped", lambda u: not u.get("isActive")),
+        ("active", lambda u: True)
+    ]
 
     for u in users:
+        for key, classification_fun in classifications:
+            if classification_fun(u):
+                users_classified[key].append(u)
+                break
 
-        chat_id = u.get("chatId")
-        name = u.get("name")
-        is_active = "😀" if u.get("isActive") else "😴"
-        is_blocked = "⛔" if u.get("isBlocked") else ""
-        is_deactivated = "📵" if u.get("isDeactivated") else ""
+    msg = f"Total users: ({len(users)})"
 
-        levels = "".join(f"{level[0]}" for level in u.get("levels") or [])
-        msg += f"\n- {chat_id} {name} {is_active}{is_blocked}{is_deactivated} {levels}"
+    for key, _ in classifications:
+        users_c = users_classified[key]
+        msg += f"\n\n<b>{key}</b> ({len(users_c)})\n" + "\n".join([utils.user_to_string(user) for user in users_c])
 
     return msg
 

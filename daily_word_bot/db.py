@@ -21,17 +21,24 @@ class DAO:
             isActive=True,
             isBlocked=False,
             isDeactivated=False,
+            isKicked=False,
             levels=levels
         ))
         self.r.set(f"userInfo:{chat_id}", user_info)
 
-    def set_user_inactive(self, chat_id: str, is_blocked: bool = False, is_deactivated: bool = False):
+    def set_user_inactive(self, chat_id: str,
+                          is_blocked: bool = False,
+                          is_deactivated: bool = False,
+                          is_kicked: bool = False
+                          ):
         user_info: dict = self.get_user(chat_id)
         user_info["isActive"] = False
         if is_blocked:
             user_info["isBlocked"] = True
         if is_deactivated:
             user_info["isDeactivated"] = True
+        if is_kicked:
+            user_info["isKicked"] = True
 
         self.r.set(f"userInfo:{chat_id}", json.dumps(user_info))
 

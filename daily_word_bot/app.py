@@ -65,9 +65,10 @@ def handle_error_send_user(func):
             except Unauthorized as e:
                 is_blocked = "blocked" in e.message
                 is_deactivated = "deactivated" in e.message
-                if not (is_blocked or is_deactivated):
+                is_kicked = "kicked" in e.message
+                if not (is_blocked or is_deactivated or is_kicked):
                     raise e
-                self.dao.set_user_inactive(chat_id, is_blocked, is_deactivated)
+                self.dao.set_user_inactive(chat_id, is_blocked, is_deactivated, is_kicked)
 
         # Any other errors must be reported
         except Exception as e:
@@ -256,7 +257,7 @@ class App:
     def callback_on_users(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
         users = list(self.dao.get_all_users())
         msg = utils.build_users_msg(users)
-        update.message.reply_text(msg)
+        update.message.reply_text(msg, parse_mode='HTML')
 
     @admin_only
     def callback_on_broadcast(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover

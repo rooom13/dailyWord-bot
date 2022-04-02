@@ -14,6 +14,7 @@ test_user_info = dict(
     isActive=True,
     isDeactivated=False,
     isBlocked=False,
+    isKicked=False,
     levels=[]
 )
 dao = DAO(config.REDIS_HOST)
@@ -45,6 +46,7 @@ def test_get_all_users():
 @pytest.mark.parametrize("kwargs", [
     {"is_blocked": True},
     {"is_deactivated": True},
+    {"is_kicked": True},
 ])
 def test_set_user_inactive(kwargs):
     dao.save_user(message, levels=[])

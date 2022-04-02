@@ -78,14 +78,48 @@ def test_build_available_commands_msg():
                    "\n/command3 ➜ Description3")
 
 
+# def test_build_users_msg():
+#     users = [{'name': 'romanito', 'isActive': True, 'chatId': 'aChatId'},
+#              {'name': 'pinxulino', 'isActive': False, 'chatId': 'aChatId2', 'levels': ['beginner', "intermediate"]}]
+#     res = utils.build_users_msg(users)
+#     tc.assertEqual(res,
+#                    "Users: (2)"
+#                    "\n- aChatId romanito 😀 "
+#                    "\n- aChatId2 pinxulino 😴 bi")
+
+
 def test_build_users_msg():
-    users = [{'name': 'romanito', 'isActive': True, 'chatId': 'aChatId'},
-             {'name': 'pinxulino', 'isActive': False, 'chatId': 'aChatId2', 'levels': ['beginner', "intermediate"]}]
+    users = [
+        {'name': 'romanito', 'isActive': True, 'chatId': 'aChatId', 'levels': ['beginner', 'intermediate']},
+        {'name': 'romanito', 'isActive': True, 'chatId': 'aChatId'},
+        {'name': 'ramonito', 'isActive': False, 'chatId': 'aChatId', 'isDeactivated': True, },
+        {'name': 'ramonito', 'isActive': False, 'chatId': 'aChatId', 'isKicked': True, },
+        {'name': 'pepeblock', 'isActive': False, 'chatId': 'aChatId', 'isBlocked': True, },
+        {'name': 'popiblock', 'isActive': False, 'chatId': 'aChatId', 'isBlocked': True, },
+        {'name': 'pinxulino', 'isActive': False, 'chatId': 'aChatId2'},
+
+    ]
     res = utils.build_users_msg(users)
-    tc.assertEqual(res,
-                   "Users: (2)"
-                   "\n- aChatId romanito 😀 "
-                   "\n- aChatId2 pinxulino 😴 bi")
+    assert res == (
+        "Total users: (7)"
+        "\n"
+        "\n<b>deactivated</b> (1)"
+        "\n- aChatId ramonito 😴📵"
+        "\n"
+        "\n<b>blocked</b> (2)"
+        "\n- aChatId pepeblock 😴⛔"
+        "\n- aChatId popiblock 😴⛔"
+        "\n"
+        "\n<b>kicked</b> (1)"
+        "\n- aChatId ramonito 😴🥾"
+        "\n"
+        "\n<b>stopped</b> (1)"
+        "\n- aChatId2 pinxulino 😴"
+        "\n"
+        "\n<b>active</b> (2)"
+        "\n- aChatId romanito 😀 <i>bi</i>"
+        "\n- aChatId romanito 😀"
+    )
 
 
 @pytest.mark.parametrize("levels,expected_inline_keyboard_buttons", [
