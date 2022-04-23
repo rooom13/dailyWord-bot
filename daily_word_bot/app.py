@@ -183,8 +183,10 @@ class App:
         self.callback_on_mylevels(update, context)
 
     def callback_on_info(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
-        msg = f"""Version: <i>{config.VERSION}</i> deployed on {self.start_date}
-        \nWord bank info:\n - {len(self.word_bank.df.index)} words, last updated on {self.word_bank.last_updated_at}"""
+
+        msg = utils.build_info_msg(config.VERSION, self.start_date,
+                                   len(self.word_bank.df.index), self.word_bank.last_updated_at,
+                                   self.contributors)
         update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
     def callback_on_get_blockwords_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
@@ -355,6 +357,7 @@ class App:
         self.dao = DAO(config.REDIS_HOST)
         self.word_bank = WordBank(config.WORD_BANK_LOCAL)
         self.backup_service = BackupService()
+        self.contributors = utils.fetch_contributors()
 
     def run(self):  # pragma: no cover
         """Run bot"""

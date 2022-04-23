@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 from telegram.error import Unauthorized
 
 from daily_word_bot.app import App
+from daily_word_bot import utils
 
 
 def test_is_admin():
@@ -14,6 +15,7 @@ def test_is_admin():
 
 @pytest.fixture
 def app():
+    utils.fetch_contributors = MagicMock()
     app = App()
     app.dao = MagicMock()
     return app

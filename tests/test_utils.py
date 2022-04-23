@@ -1,16 +1,15 @@
 import os
-import pytest
-import unittest
+from datetime import datetime
 from telegram import BotCommand, InlineKeyboardButton
 
 from daily_word_bot import utils
 
-tc = unittest.TestCase()
+import pytest
 
 
 def test_highlight():
     res = utils.highlight("a")
-    tc.assertEqual(res, "<b>a</b>")
+    assert res == "<b>a</b>"
 
 
 @pytest.mark.parametrize("terms,expected", [
@@ -22,7 +21,7 @@ def test_highlight():
 def test_get_terms_without_articles(terms, expected):
 
     res = utils.get_terms_without_articles(terms)
-    tc.assertEqual(res, expected)
+    assert res == expected
 
 
 @pytest.mark.parametrize("terms,sentence,expected", [
@@ -31,7 +30,7 @@ def test_get_terms_without_articles(terms, expected):
 ])
 def test_highlight_in_sentence(terms, sentence, expected):
     res = utils.highlight_in_sentence(sentence, terms)
-    tc.assertEqual(res, expected)
+    assert res == expected
 
 
 def test_build_word_msg():
@@ -52,8 +51,7 @@ def test_build_word_msg():
 
     res = utils.build_word_msg(word_data)
 
-    tc.assertEqual(res,
-                   "\n🇩🇪 der pato/die pata"
+    assert res == ("\n🇩🇪 der pato/die pata"
                    "\n🇪🇸 el pato/la pata"
                    "\n"
                    "\n🇩🇪 der <b>pato</b> baila"
@@ -71,11 +69,29 @@ def test_build_available_commands_msg():
     ]
 
     res = utils.build_available_commands_msg(bot_commands)
-    tc.assertEqual(res,
-                   "Available commands:"
+    assert res == ("Available commands:"
                    "\n/command1 ➜ Description1"
                    "\n/command2 ➜ Description2"
                    "\n/command3 ➜ Description3")
+
+
+def test_build_info_msg():
+    result = utils.build_info_msg("aVersion", datetime(2022, 12, 13), 500, datetime(2022, 12, 13), [
+        {"login": "romanito", "html_url": "http:/foo", "type": "User"},
+        {"login": "menganito", "html_url": "http:/foo", "type": "User"},
+        {"login": "bot", "html_url": "http:/foo", "type": "Bot"}
+    ])
+
+    assert result == (
+        "Version: <i>aVersion</i> deployed on 2022-12-13 00:00:00"
+        "\n"
+        "\nWord bank info:"
+        "\n - 500 words, last updated on 2022-12-13 00:00:00"
+        "\n"
+        "\n Project hero contributors who deserve a cape:  "
+        f"\n {utils.hero_char} romanito"
+        f"\n {utils.hero_char} menganito"
+    )
 
 
 def test_build_users_msg():
