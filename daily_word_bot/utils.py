@@ -1,7 +1,9 @@
 import re
 import os
 from collections import defaultdict
-from typing import List
+from typing import List, Dict
+from datetime import datetime
+import requests
 from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 from daily_word_bot import utils
@@ -97,6 +99,22 @@ def build_available_commands_msg(bot_commands: List[BotCommand]) -> str:
     return "Available commands:\n" + commands_str
 
 
+hero_char = "🦸🏿‍♀️"
+
+
+def build_info_msg(version: str, start_date: datetime,
+                   word_bank_length: int, word_bank_update_date: datetime,
+                   contributors: List[Dict]) -> str:
+    str_contributors = "\n".join([f" {hero_char} {c['login']}" for c in contributors if c['type'] != 'Bot'])
+    return (
+        f"Version: <i>{version}</i> deployed on {start_date}"
+        "\n"
+        f"\nWord bank info:\n - {word_bank_length} words, last updated on {word_bank_update_date}"
+        "\n"
+        f"\n Project hero contributors who deserve a cape:  \n{str_contributors}"
+    )
+
+
 def build_users_msg(users: List[dict]) -> str:
 
     users_classified = defaultdict(list)
@@ -128,3 +146,10 @@ def build_users_msg(users: List[dict]) -> str:
 
 def parse_admin_chat_ids_var() -> List[str]:
     return (os.getenv("ADMIN_CHAT_IDS") or "").split(",")
+
+
+def fetch_contributors() -> List[str]:  # pragma: no cover
+    try:
+        return requests.get("https://api.github.com/repos/rooom13/dailyWord-bot/contributors").json()
+    except Exception:
+        return []
