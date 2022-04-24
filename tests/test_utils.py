@@ -89,8 +89,8 @@ def test_build_info_msg():
         "\n - 500 words, last updated on 2022-12-13 00:00:00"
         "\n"
         "\n Project hero contributors who deserve a cape:  "
-        f"\n {utils.hero_char} romanito"
-        f"\n {utils.hero_char} menganito"
+        f"\n {utils.hero_char} <a href=\"https://github.com/romanito\">romanito</a>"
+        f"\n {utils.hero_char} <a href=\"https://github.com/menganito\">menganito</a>"
     )
 
 
@@ -178,3 +178,15 @@ def test_get_broadcast_msg_from_preview():
 def test_parse_admin_chat_ids_var():
     os.environ["ADMIN_CHAT_IDS"] = "111,222"
     assert utils.parse_admin_chat_ids_var() == ["111", "222"]
+
+
+def test_convert_to_hyperlink():
+    contributor_name = "rangelrey"
+    url = "http://www.genmagic.org"
+    assert f'<a href=\"{url}\">{contributor_name}</a>' == utils.convert_to_hyperlink(url, contributor_name)
+
+
+def test_convert_to_github_hyperlink():
+    contributor_name = "rangelrey"
+    url = 'https://github.com/'
+    assert f'<a href=\"{url}{contributor_name}\">{contributor_name}</a>' == utils.convert_to_github_hyperlink(contributor_name)
