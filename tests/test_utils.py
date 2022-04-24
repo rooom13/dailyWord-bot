@@ -77,9 +77,9 @@ def test_build_available_commands_msg():
 
 def test_build_info_msg():
     result = utils.build_info_msg("aVersion", datetime(2022, 12, 13), 500, datetime(2022, 12, 13), [
-        {"login": "romanito", "html_url": "https://github.com/romanito", "type": "User"},
-        {"login": "menganito", "html_url": "https://github.com/menganito", "type": "User"},
-        {"login": "bot", "html_url": "https://github.com/bot", "type": "Bot"}
+        {"login": "romanito", "html_url": "https://github.com/foo", "type": "User"},
+        {"login": "menganito", "html_url": "https://github.com/foo2", "type": "User"},
+        {"login": "bot", "html_url": "https://github.com/foo3", "type": "Bot"}
     ])
 
     assert result == (
@@ -89,8 +89,8 @@ def test_build_info_msg():
         "\n - 500 words, last updated on 2022-12-13 00:00:00"
         "\n"
         "\n Project hero contributors who deserve a cape:  "
-        f"\n {utils.hero_char} <a href='https://github.com/romanito'>romanito</a>"
-        f"\n {utils.hero_char} <a href='https://github.com/menganito'>menganito</a>"
+        f"\n {utils.hero_char} <a href='https://github.com/foo'>romanito</a>"
+        f"\n {utils.hero_char} <a href='https://github.com/foo2'>menganito</a>"
     )
 
 
@@ -182,5 +182,5 @@ def test_parse_admin_chat_ids_var():
 
 def test_hyperlink():
     contributor_name = 'romanito'
-    url = "http://www.genmagic.org/romanito"
+    url = "http://www.genmagic.org/foo"
     assert f"<a href='{url}'>{contributor_name}</a>" == utils.hyperlink(url, contributor_name)
