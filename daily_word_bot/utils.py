@@ -102,10 +102,14 @@ def build_available_commands_msg(bot_commands: List[BotCommand]) -> str:
 hero_char = "🦸🏿‍♀️"
 
 
+def hyperlink(url: str, text: str) -> str:
+    return f"<a href='{url}'>{text}</a>"
+
+
 def build_info_msg(version: str, start_date: datetime,
                    word_bank_length: int, word_bank_update_date: datetime,
                    contributors: List[Dict]) -> str:
-    str_contributors = "\n".join([f" {hero_char} {c['login']}" for c in contributors if c['type'] != 'Bot'])
+    str_contributors = "\n".join([f" {hero_char} {utils.hyperlink(c['html_url'], c['login'])}" for c in contributors if c['type'] != 'Bot'])
     return (
         f"Version: <i>{version}</i> deployed on {start_date}"
         "\n"
