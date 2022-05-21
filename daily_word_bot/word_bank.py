@@ -1,4 +1,4 @@
-import typing
+from typing import List, Union
 
 from datetime import datetime
 
@@ -17,7 +17,7 @@ class WordBank:
     df: pd.DataFrame = None
     last_updated_at = None
 
-    def __init__(self, local: bool = False, local_path: typing.Union[str] = "tests/resources/word_bank.csv"):
+    def __init__(self, local: bool = False, local_path: Union[str] = "tests/resources/word_bank.csv"):
         self.local = local
         self.local_path = local_path
         self.update()
@@ -62,7 +62,7 @@ class WordBank:
 
         row = df_candidates.sample().iloc[0]
 
-        examples: typing.List[dict] = []
+        examples: List[dict] = []
         for i in range(1, 5):
             ex_de = row[f"Deutscher Ausdruck {i}"]
             ex_es = row[f"Spanischer Ausdruck {i}"]

@@ -59,6 +59,20 @@ def test_set_user_inactive(kwargs):
     dao.r.flushall()
 
 
+def test_set_get_remove_user_bocked_words_paginated():
+    dao.save_user_blocked_word(message, "wid0")
+    next_page, blocked_words = dao.get_user_blocked_words_paginated(chat_id, page=0, page_size=10)
+    assert blocked_words == ["wid0"]
+    assert next_page == 0
+
+    dao.remove_user_blocked_word(message, "wid0")
+    next_page, blocked_words = dao.get_user_blocked_words_paginated(chat_id, page=0, page_size=10)
+    assert blocked_words == []
+    assert next_page == 0
+
+    dao.r.flushall()
+
+
 def test_set_get_remove_user_bocked_words():
     dao.save_user_blocked_word(message, "wid0")
     blocked_words = dao.get_user_blocked_words(chat_id)

@@ -192,7 +192,7 @@ class App:
     def callback_on_get_blockwords_callback(self, update: Update, context: CallbackContext, current_page: Optional[int] = None) -> None:  # pragma: no cover
         update.callback_query and update.callback_query.answer()
 
-        WORDS_PER_PAGE = 20
+        WORDS_PER_PAGE = 10
         if current_page is None:
             try:
                 current_page = int(update.callback_query.data.split("_")[-1])  # read page index
@@ -201,21 +201,17 @@ class App:
 
         chat_id = update.effective_message.chat.id
 
-        blocked_word_ids = self.dao.get_user_blocked_words(chat_id)
+        next_page, blocked_word_ids = self.dao.get_user_blocked_words_paginated(chat_id, page=current_page, page_size=WORDS_PER_PAGE)
         blocked_words = self.word_bank.get_words(blocked_word_ids)
         blocked_words = list(sorted(blocked_words, key=lambda x: x["es"]))
 
-        n_words = len(blocked_words)
-        n_pages = (n_words // WORDS_PER_PAGE) + 1
+        n_words = self.dao.get_count_blocked_words(chat_id)
 
         inline_keyboard_buttons = []
 
         show_pagination = n_words >= WORDS_PER_PAGE
-        if show_pagination:
-            previous_page = (current_page - 1) % n_pages
-            inline_keyboard_buttons.append([InlineKeyboardButton(f"previous page ({previous_page})", callback_data=f'/blockedwords_{previous_page}')])
 
-        for blocked_word in blocked_words[current_page * WORDS_PER_PAGE: (current_page + 1) * WORDS_PER_PAGE]:
+        for blocked_word in blocked_words:
             word_id = blocked_word["word_id"]
             german_word = blocked_word["de"]
             spanish_word = blocked_word["es"]
@@ -223,8 +219,7 @@ class App:
             inline_keyboard_buttons.append([InlineKeyboardButton(spanish_and_german_word, callback_data=f'/unblockword_fbw {word_id} {current_page}')])
 
         if show_pagination:
-            next_page = (current_page + 1) % n_pages
-            inline_keyboard_buttons.append([InlineKeyboardButton(f"next page ({next_page})", callback_data=f'/blockedwords_{next_page}')])
+            inline_keyboard_buttons.append([InlineKeyboardButton("next page ➡", callback_data=f'/blockedwords_{next_page}')])
 
         reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
 
