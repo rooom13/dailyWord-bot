@@ -1,4 +1,4 @@
-import typing
+from typing import Tuple, Iterator, List, Set, Union
 import redis
 import json
 
@@ -47,15 +47,15 @@ class DAO:
         user_info = json.loads(user_info) if user_info else {}
         return user_info
 
-    def get_all_user_ids(self) -> typing.List[str]:
+    def get_all_user_ids(self) -> List[str]:
         return to_string_list(self.r.smembers("users"))
 
-    def get_all_users(self) -> typing.Iterator[dict]:
+    def get_all_users(self) -> Iterator[dict]:
         chat_ids = self.get_all_user_ids()
         for chat_id in chat_ids:
             yield dict(self.get_user(chat_id), chatId=chat_id)
 
-    def get_all_active_users(self) -> typing.List[dict]:
+    def get_all_active_users(self) -> List[dict]:
         users = self.get_all_users()
 
         def is_active(x):
@@ -70,10 +70,17 @@ class DAO:
         chat_id: str = message.chat.id
         self.r.srem(f"blockedWords-{chat_id}", word_id)
 
-    def get_user_blocked_words(self, chat_id) -> typing.List[str]:
+    def get_user_blocked_words(self, chat_id) -> List[str]:
         return to_string_list(self.r.smembers(f"blockedWords-{chat_id}"))
 
-    def get_user_levels(self, chat_id) -> typing.List[str]:
+    def get_count_blocked_words(self, chat_id: str) -> int:
+        return self.r.scard(f"blockedWords-{chat_id}")
+
+    def get_user_blocked_words_paginated(self, chat_id: str, page: int, page_size: int) -> Tuple[int, List[str]]:
+        cursor, word_ids = self.r.sscan(f"blockedWords-{chat_id}", cursor=page, count=page_size)
+        return cursor, to_string_list(word_ids)
+
+    def get_user_levels(self, chat_id) -> List[str]:
         user_info = self.get_user(chat_id)
         user_levels = user_info.get("levels", [])
         return user_levels
@@ -95,8 +102,8 @@ class DAO:
         self.r.set(f"userInfo:{chat_id}", user_info)
 
 
-TypeSmembers = typing.Set[typing.Union[bytes, float, int, str]]
+TypeSmembers = Set[Union[bytes, float, int, str]]
 
 
-def to_string_list(li: TypeSmembers) -> typing.List[str]:
+def to_string_list(li: TypeSmembers) -> List[str]:
     return [i.decode("utf-8") for i in li]

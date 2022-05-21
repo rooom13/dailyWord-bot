@@ -1,7 +1,7 @@
 import html
 
 from functools import wraps
-import typing
+from typing import Union, Optional
 import traceback
 import logging
 from datetime import datetime
@@ -25,8 +25,8 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-dao: typing.Union[DAO, None] = None
-word_bank: typing.Union[WordBank, None] = None
+dao: Union[DAO, None] = None
+word_bank: Union[WordBank, None] = None
 
 
 user_bot_commands = [
@@ -189,26 +189,41 @@ class App:
                                    self.contributors)
         update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
-    def callback_on_get_blockwords_callback(self, update: Update, context: CallbackContext) -> None:  # pragma: no cover
+    def callback_on_get_blockwords_callback(self, update: Update, context: CallbackContext, current_page: Optional[int] = None) -> None:  # pragma: no cover
+        update.callback_query and update.callback_query.answer()
+
+        WORDS_PER_PAGE = 10
+        if current_page is None:
+            try:
+                current_page = int(update.callback_query.data.split("_")[-1])  # read page index
+            except Exception:
+                current_page = 0
 
         chat_id = update.effective_message.chat.id
 
-        blocked_word_ids = self.dao.get_user_blocked_words(chat_id)
+        next_page, blocked_word_ids = self.dao.get_user_blocked_words_paginated(chat_id, page=current_page, page_size=WORDS_PER_PAGE)
         blocked_words = self.word_bank.get_words(blocked_word_ids)
+        blocked_words = list(sorted(blocked_words, key=lambda x: x["es"]))
+
+        n_words = self.dao.get_count_blocked_words(chat_id)
 
         inline_keyboard_buttons = []
+
+        show_pagination = n_words >= WORDS_PER_PAGE
 
         for blocked_word in blocked_words:
             word_id = blocked_word["word_id"]
             german_word = blocked_word["de"]
             spanish_word = blocked_word["es"]
             spanish_and_german_word = "🇪🇸" + spanish_word + " | " + "🇩🇪" + german_word
-            inline_keyboard_buttons.append([InlineKeyboardButton(spanish_and_german_word, callback_data=f'/unblockword_fbw {word_id}')])
+            inline_keyboard_buttons.append([InlineKeyboardButton(spanish_and_german_word, callback_data=f'/unblockword_fbw {word_id} {current_page}')])
+
+        if show_pagination:
+            inline_keyboard_buttons.append([InlineKeyboardButton("next page ➡", callback_data=f'/blockedwords_{next_page}')])
 
         reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
 
         msg = "These are your blocked words. Click to unblock them." if inline_keyboard_buttons else "You don't have any blocked words."
-
         if update.callback_query:
             update.callback_query.edit_message_text(msg, reply_markup=reply_markup)
         else:
@@ -230,16 +245,19 @@ class App:
     def callback_on_unblockword(self, update: Update, context: CallbackContext, is_from_blocked_words=False):  # pragma: no cover
         """Arg is_from_blocked_words indicates whether it was called from the /blockedwords comand. If so,
         it should show the updated /blockedwords output"""
-
         update.callback_query.answer()
         callback_data = update.callback_query.data.split(" ")
-        word_id = " ".join(callback_data[1:])
+        word_id = callback_data[1]  # position 1 because 2 is the page
 
+        try:
+            current_page = int(callback_data[2])
+        except Exception:
+            current_page = 0
         self.dao.remove_user_blocked_word(update.callback_query.message, word_id)
 
         # if called from blocked words, should show the updated blocked words
         if is_from_blocked_words:
-            return self.callback_on_get_blockwords_callback(update, context)
+            return self.callback_on_get_blockwords_callback(update, context, current_page=current_page)
         else:
             reply_markup = InlineKeyboardMarkup([
                 [InlineKeyboardButton("Gelernt! - Aprendida!", callback_data=f"/blockword {word_id}")]
@@ -371,7 +389,7 @@ class App:
             day="*",
             hour="10,18,20",
             minute="30",
-            # second="10,20,30,40,50,0"  # test
+            # second="*/10"  # test
         ))
         self.updater.job_queue.run_custom(lambda x: self.word_bank.update(), job_kwargs=dict(
             trigger="cron",
@@ -400,6 +418,7 @@ class App:
                 CallbackQueryHandler(self.callback_on_unblockword, pattern=r"\/unblockword .*"),
                 # fbw = from blocked words
                 CallbackQueryHandler(lambda u, c: self.callback_on_unblockword(u, c, is_from_blocked_words=True), pattern=r"\/unblockword_fbw .*"),
+                CallbackQueryHandler(self.callback_on_get_blockwords_callback, pattern=r"\/blockedwords_*"),
 
                 CommandHandler("mylevels", self.callback_on_mylevels),
                 CallbackQueryHandler(self.callback_on_addlevel, pattern=r"\/addlevel .*"),
