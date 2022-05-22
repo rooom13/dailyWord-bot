@@ -209,8 +209,6 @@ class App:
 
         inline_keyboard_buttons = []
 
-        show_pagination = n_words >= WORDS_PER_PAGE
-
         for blocked_word in blocked_words:
             word_id = blocked_word["word_id"]
             german_word = blocked_word["de"]
@@ -218,8 +216,9 @@ class App:
             spanish_and_german_word = "🇪🇸" + spanish_word + " | " + "🇩🇪" + german_word
             inline_keyboard_buttons.append([InlineKeyboardButton(spanish_and_german_word, callback_data=f'/unblockword_fbw {word_id} {current_page}')])
 
-        if show_pagination:
-            inline_keyboard_buttons.append([InlineKeyboardButton("next page ➡", callback_data=f'/blockedwords_{next_page}')])
+        if n_words > WORDS_PER_PAGE:
+            page_button_text = "next page ➡" if next_page else "go to first page ↩"
+            inline_keyboard_buttons.append([InlineKeyboardButton(page_button_text, callback_data=f'/blockedwords_{next_page}')])
 
         reply_markup = InlineKeyboardMarkup(inline_keyboard_buttons)
 
