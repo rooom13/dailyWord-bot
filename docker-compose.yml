@@ -8,6 +8,8 @@ services:
         - "6379:6379"
     volumes:
         - /data/redis_daily_word_bot:/data
+    restart: always
+
   daily_word_bot_app:
     build: .
     image: rooom13:deutschlerne_bot
