@@ -1,20 +1,22 @@
 FROM python:3.8-slim
 
-RUN pip install pipenv
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /usr/local/bin/uv
 
-COPY ./Pipfile ./Pipfile
-COPY ./Pipfile.lock /Pipfile.lock
+# Set working directory
+WORKDIR /app
 
-RUN pipenv install --deploy --system --ignore-pipfile
-RUN pip uninstall pipenv -y
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
 
-COPY service-account.json .
+# Install dependencies
+RUN uv sync --frozen --no-dev
 
+# Copy application files
+COPY service-account.json ./
 COPY ./daily_word_bot ./daily_word_bot
-
 
 EXPOSE 8443
 
-RUN echo python -V
-
-CMD [ "python", "-m", "daily_word_bot"]
+# Run the application using uv
+CMD ["uv", "run", "python", "-m", "daily_word_bot"]
