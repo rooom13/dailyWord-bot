@@ -3,7 +3,7 @@ name = "dailyword-bot"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "python-telegram-bot==13.11",
     "redis",
