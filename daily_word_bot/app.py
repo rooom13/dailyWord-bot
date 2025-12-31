@@ -372,37 +372,18 @@ class App:
     def __init__(self):
         self.start_date = datetime.now()
         self.dao = DAO(config.REDIS_HOST)
-        self.word_bank = WordBank(config.WORD_BANK_LOCAL)
+        # self.word_bank = WordBank(config.WORD_BANK_LOCAL)
+        self.word_bank = None  # WordBank(config.WORD_BANK_LOCAL)
         self.backup_service = BackupService()
-        self.contributors = utils.fetch_contributors()
+        # self.contributors = utils.fetch_contributors()
+        self.contributors = None  # utils.fetch_contributors()
 
-    def run(self):  # pragma: no cover
-        """Run bot"""
-        logger.info("Started app")
-
+        # Initialize updater and dispatcher (needed for both polling and webhook modes)
         self.updater = Updater(config.BOT_TOKEN)
-        self.updater.bot.set_my_commands(user_bot_commands)
+        self._setup_handlers()
 
-        self.updater.job_queue.run_custom(self.job_callback_send_word, job_kwargs=dict(
-            trigger="cron",
-            day="*",
-            hour="10,18,20",
-            minute="30",
-            # second="*/10"  # test
-        ))
-        self.updater.job_queue.run_custom(lambda x: self.word_bank.update(), job_kwargs=dict(
-            trigger="cron",
-            day="*",
-            hour="7",
-            # second="10,20,30,40,50,0"  # test
-        ))
-
-        # daily backup
-        self.updater.job_queue.run_custom(self.callback_chrono_backup, job_kwargs=dict(
-            trigger="cron",
-            hour="22"
-        ))
-
+    def _setup_handlers(self):
+        """Setup bot command handlers"""
         # Bot conversation flow logic
         broadcast_handler = ConversationHandler(
             entry_points=[
@@ -446,5 +427,47 @@ class App:
         self.updater.dispatcher.add_handler(broadcast_handler)
         self.updater.dispatcher.add_error_handler(self.error_handler)
 
+    def run(self):  # pragma: no cover
+        """Run bot in polling mode (for local/container deployment)"""
+        logger.info("Started app in polling mode")
+
+        self.updater.bot.set_my_commands(user_bot_commands)
+
+        self.updater.job_queue.run_custom(self.job_callback_send_word, job_kwargs=dict(
+            trigger="cron",
+            day="*",
+            hour="10,18,20",
+            minute="30",
+            # second="*/10"  # test
+        ))
+        self.updater.job_queue.run_custom(lambda x: self.word_bank.update(), job_kwargs=dict(
+            trigger="cron",
+            day="*",
+            hour="7",
+            # second="10,20,30,40,50,0"  # test
+        ))
+
+        # daily backup
+        self.updater.job_queue.run_custom(self.callback_chrono_backup, job_kwargs=dict(
+            trigger="cron",
+            hour="22"
+        ))
+
         self.updater.start_polling()
         self.updater.idle()
+
+    def process_update(self, update_json: dict):
+        """Process a single update from Lambda webhook event"""
+        update = Update.de_json(update_json, self.updater.bot)
+        self.updater.dispatcher.process_update(update)
+
+    def process_scheduled_event(self, event_data: dict):
+        """Process scheduled event from EventBridge"""
+        action = event_data.get('action')
+        logger.info(f"Processing scheduled action: {action}")
+
+        if action == 'update_bank':
+            self.word_bank.update()
+        else:
+            # Default to sending words if no action or action is 'send_words'
+            self.job_callback_send_word(None)
