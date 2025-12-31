@@ -10,6 +10,23 @@
 *.pem
 service-account.json
 
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+terraform.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Lambda deployment
+deployment-package.zip
+package/
 
 # exclude everything
 resources/*
@@ -19,3 +36,4 @@ reports/*
 .coverage
 *.rdb
 .vscode/launch.json
+*.log
