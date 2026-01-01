@@ -371,16 +371,19 @@ class App:
 
     def __init__(self):
         self.start_date = datetime.now()
+        logger.info("Initializing bot...")
         self.dao = DAO(config.REDIS_HOST)
+        logger.info("DAO initialized.")
         # self.word_bank = WordBank(config.WORD_BANK_LOCAL)
         self.word_bank = None  # WordBank(config.WORD_BANK_LOCAL)
-        self.backup_service = BackupService()
-        # self.contributors = utils.fetch_contributors()
+        self.backup_service = None  # BackupService()
         self.contributors = None  # utils.fetch_contributors()
 
         # Initialize updater and dispatcher (needed for both polling and webhook modes)
         self.updater = Updater(config.BOT_TOKEN)
         self._setup_handlers()
+
+        logger.info("App initialized.")
 
     def _setup_handlers(self):
         """Setup bot command handlers"""

@@ -1,40 +1,70 @@
 import json
 import logging
+import signal
+from contextlib import contextmanager
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Initialize the app outside the handler to reuse it across warm invocations
+
+class TimeoutException(Exception):
+    pass
+
+
+@contextmanager
+def timeout(seconds):
+    """Context manager that raises TimeoutException after specified seconds."""
+    def timeout_handler(signum, frame):
+        raise TimeoutException(f"Operation timed out after {seconds} seconds")
+
+    # Set the signal handler and alarm
+    original_handler = signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(seconds)
+
+    try:
+        yield
+    finally:
+        # Disable the alarm and restore original handler
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, original_handler)
 
 
 def lambda_handler(event, context):
-    from daily_word_bot.app import App
-    app = App()
     """
     AWS Lambda handler function for Telegram Webhooks.
     """
     logger.info(f"Received webhook event: {json.dumps(event)}")
 
     try:
-        # User requested to read Excel on each request.
-        # logger.info("Updating WordBank from source...")
-        # app.word_bank.update()
 
         if 'body' in event:
             body = json.loads(event['body'])
-            app.process_update(body)
-            return {
-                'statusCode': 200,
-                'body': json.dumps('Update processed')
-            }
 
+            try:
+                with timeout(30):
+                    from daily_word_bot.app import App
+                    app = App()
+                    app.process_update(body)
+
+                return {
+                    'statusCode': 200,
+                    'body': json.dumps('Update processed')
+                }
+            except TimeoutException as te:
+                logger.error(f"Timeout processing update: {te}")
+                return {
+                    'statusCode': 504,
+                    'body': json.dumps('Request timeout')
+                }
+
+        logger.error(f"Unrecognized event structure: {json.dumps(event)}")
         return {
             'statusCode': 400,
             'body': json.dumps('Unrecognized event type')
         }
 
     except Exception as e:
-        logger.error(f"Error processing event: {e}", exc_info=True)
+        logger.exception(f"Error processing event={json.dumps(event)}: {e}")
         return {
             'statusCode': 500,
             'body': json.dumps(f"Internal server error: {str(e)}")

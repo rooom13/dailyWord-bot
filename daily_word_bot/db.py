@@ -1,15 +1,46 @@
 from typing import Tuple, Iterator, List, Set, Union
 import redis
 import json
-
+import logging
 from telegram import Message
+
+
+logger = logging.getLogger()
 
 
 class DAO:
 
     def __init__(self, host: str):
         port: int = 6379
-        self.r: redis.Redis = redis.Redis(host=host, port=port)
+        logger.info(f"Initializing Redis connection to {host}:{port} with SSL")
+
+        # ElastiCache Serverless requires TLS/SSL
+        self.r: redis.Redis = redis.Redis(
+            host=host,
+            port=port,
+            ssl=True,
+            ssl_cert_reqs=None,  # Don't verify certificates for ElastiCache Serverless
+            socket_connect_timeout=10,
+            socket_timeout=10,
+            socket_keepalive=True,
+            health_check_interval=30,
+            retry_on_timeout=True,
+            decode_responses=False
+        )
+
+        try:
+            logger.info("Attempting to ping Redis...")
+            response = self.r.ping()
+            logger.info(f"Successfully connected to Redis. Ping response: {response}")
+        except redis.exceptions.ConnectionError as e:
+            logger.error(f"Failed to connect to Redis: {e}", exc_info=True)
+            raise
+        except redis.exceptions.TimeoutError as e:
+            logger.error(f"Redis connection timeout: {e}", exc_info=True)
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error connecting to Redis: {e}", exc_info=True)
+            raise
 
     def save_user(self, message: Message, levels: list):
         chat_id: str = message.chat.id

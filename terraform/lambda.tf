@@ -16,6 +16,11 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_vpc" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+
 # S3 Bucket for Lambda code
 resource "aws_s3_bucket" "lambda_code" {
   bucket_prefix = "${var.project_name}-lambda-"
@@ -41,13 +46,24 @@ resource "aws_lambda_function" "webhook" {
   timeout          = 60
   memory_size      = 256
 
+  vpc_config {
+    subnet_ids         = [aws_subnet.private_1.id, aws_subnet.private_2.id]
+    security_group_ids = [aws_security_group.lambda.id]
+  }
+
   environment {
     variables = {
       BOT_TOKEN      = var.bot_token
       ADMIN_CHAT_IDS = var.admin_chat_ids
       ENV            = "live"
+      REDIS_HOST     = aws_elasticache_serverless_cache.redis.endpoint[0].address
     }
   }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.lambda_basic,
+    aws_iam_role_policy_attachment.lambda_vpc
+  ]
 }
 
 # Lambda Function URL
