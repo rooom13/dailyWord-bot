@@ -28,19 +28,9 @@ class DAO:
             decode_responses=False
         )
 
-        try:
-            logger.info("Attempting to ping Redis...")
-            response = self.r.ping()
-            logger.info(f"Successfully connected to Redis. Ping response: {response}")
-        except redis.exceptions.ConnectionError as e:
-            logger.error(f"Failed to connect to Redis: {e}", exc_info=True)
-            raise
-        except redis.exceptions.TimeoutError as e:
-            logger.error(f"Redis connection timeout: {e}", exc_info=True)
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error connecting to Redis: {e}", exc_info=True)
-            raise
+        logger.info("Attempting to ping Redis...")
+        response = self.r.ping()
+        logger.info(f"Successfully connected to Redis. Ping response: {response}")
 
     def save_user(self, message: Message, levels: list):
         chat_id: str = message.chat.id

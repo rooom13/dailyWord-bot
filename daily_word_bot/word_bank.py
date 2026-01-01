@@ -1,11 +1,12 @@
 from typing import List, Union
-
+import logging
 from datetime import datetime
 
 import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
 from gspread import Spreadsheet, Worksheet
+logger = logging.getLogger(__name__)
 
 
 class WordBank:
@@ -24,7 +25,7 @@ class WordBank:
 
     def update(self) -> None:
         """Updates the df by fetching current Google Spreadsheets document"""
-
+        logger.info("Updating word bank...")
         if self.local:
             df = pd.read_csv(self.local_path, sep=";").set_index("word_id").head(5)
         else:  # pragma: no cover
@@ -39,6 +40,7 @@ class WordBank:
             df = pd.DataFrame(data, columns=header).set_index("word_id")
         self.df = df
         self.last_updated_at = str(datetime.now())
+        logger.info("Word bank updated.")
 
     def get_random(self, levels: list, exclude: list) -> dict:
         """Get a random word excluding the provided ones and taking into account the user levels"""

@@ -340,7 +340,7 @@ class App:
         self.send_message_to_user(user, msg, reply_markup=reply_markup)
 
     def callback_chrono_backup(self, context: CallbackContext):  # pragma: no cover
-        self.backup_service.backup()
+        BackupService().backup()
         logger.info("Backed up!")
 
     def send_message_to_admins(self, msg: str):  # pragma: no cover
@@ -374,16 +374,27 @@ class App:
         logger.info("Initializing bot...")
         self.dao = DAO(config.REDIS_HOST)
         logger.info("DAO initialized.")
-        # self.word_bank = WordBank(config.WORD_BANK_LOCAL)
-        self.word_bank = None  # WordBank(config.WORD_BANK_LOCAL)
+        self.__word_bank = None  # Lazy loaded
         self.backup_service = None  # BackupService()
-        self.contributors = None  # utils.fetch_contributors()
+        self.__contributors = []  # lazy loaded
 
         # Initialize updater and dispatcher (needed for both polling and webhook modes)
         self.updater = Updater(config.BOT_TOKEN)
         self._setup_handlers()
 
         logger.info("App initialized.")
+
+    @property
+    def word_bank(self) -> WordBank:
+        if self.__word_bank is None:
+            self.__word_bank = WordBank(config.WORD_BANK_LOCAL)
+        return self.__word_bank
+
+    @property
+    def contributors(self) -> list:
+        if not self.__contributors:
+            self.__contributors = utils.fetch_contributors()
+        return self.__contributors
 
     def _setup_handlers(self):
         """Setup bot command handlers"""
@@ -459,18 +470,11 @@ class App:
         self.updater.start_polling()
         self.updater.idle()
 
-    def process_update(self, update_json: dict):
+    def process_update(self, update_json: dict):  # pragma: no cover
         """Process a single update from Lambda webhook event"""
         update = Update.de_json(update_json, self.updater.bot)
         self.updater.dispatcher.process_update(update)
 
-    def process_scheduled_event(self, event_data: dict):
+    def process_send_word(self):  # pragma: no cover
         """Process scheduled event from EventBridge"""
-        action = event_data.get('action')
-        logger.info(f"Processing scheduled action: {action}")
-
-        if action == 'update_bank':
-            self.word_bank.update()
-        else:
-            # Default to sending words if no action or action is 'send_words'
-            self.job_callback_send_word(None)
+        self.job_callback_send_word(None)

@@ -21,3 +21,9 @@ variable "admin_chat_ids" {
   type        = string
   sensitive   = true
 }
+
+variable "lambda_function_timeout_seconds" {
+  description = "Timeout for the Lambda function in seconds"
+  type        = number
+  default     = 60
+}

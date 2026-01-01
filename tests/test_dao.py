@@ -1,9 +1,9 @@
 import pytest
 import fakeredis
+from unittest.mock import Mock, patch
 
 from telegram import Message, Chat
 
-from daily_word_bot.config import config
 from daily_word_bot.db import DAO
 from daily_word_bot import utils
 
@@ -17,30 +17,49 @@ test_user_info = dict(
     isKicked=False,
     levels=[]
 )
-dao = DAO(config.REDIS_HOST)
-dao.r = fakeredis.FakeStrictRedis()
-message = Message(message_id=123456789, date="",
-                  chat=Chat(
-                      id=chat_id,
-                      first_name=test_user_info["name"],
-                      type=""))
 
 
-def test_save_user():
+@pytest.fixture
+def dao():
+    """Create a DAO instance with a fake Redis connection."""
+    with patch('daily_word_bot.db.redis.Redis') as mock_redis:
+        # Mock the ping method to avoid connection attempts
+        mock_instance = Mock()
+        mock_instance.ping.return_value = True
+        mock_redis.return_value = mock_instance
+
+        # Create DAO instance (won't actually connect)
+        dao_instance = DAO("redis")
+        # Replace with fake Redis for actual testing
+        dao_instance.r = fakeredis.FakeStrictRedis()
+        yield dao_instance
+        # Cleanup after each test
+        dao_instance.r.flushall()
+
+
+@pytest.fixture
+def message():
+    """Create a test message."""
+    return Message(message_id=123456789, date="",
+                   chat=Chat(
+                       id=chat_id,
+                       first_name=test_user_info["name"],
+                       type=""))
+
+
+def test_save_user(dao, message):
     dao.save_user(message, levels=[])
     user_info = dao.get_user(chat_id)
     active_users = dao.get_all_user_ids()
 
     assert test_user_info == user_info
     assert chat_id in active_users
-    dao.r.flushall()
 
 
-def test_get_all_users():
+def test_get_all_users(dao, message):
     dao.save_user(message, levels=[])
     users = list(dao.get_all_users())
     assert dict(test_user_info, chatId=chat_id) in users
-    dao.r.flushall()
 
 
 @pytest.mark.parametrize("kwargs", [
@@ -48,7 +67,7 @@ def test_get_all_users():
     {"is_deactivated": True},
     {"is_kicked": True},
 ])
-def test_set_user_inactive(kwargs):
+def test_set_user_inactive(dao, message, kwargs):
     dao.save_user(message, levels=[])
     active_users = dao.get_all_active_users()
     assert dict(test_user_info, chatId=chat_id, levels=[]) in active_users
@@ -56,10 +75,9 @@ def test_set_user_inactive(kwargs):
     dao.set_user_inactive(chat_id, **kwargs)
     active_users = dao.get_all_active_users()
     assert [] == active_users
-    dao.r.flushall()
 
 
-def test_set_get_remove_user_bocked_words_paginated():
+def test_set_get_remove_user_bocked_words_paginated(dao, message):
     dao.save_user_blocked_word(message, "wid0")
     next_page, blocked_words = dao.get_user_blocked_words_paginated(chat_id, page=0, page_size=10)
     assert blocked_words == ["wid0"]
@@ -70,10 +88,8 @@ def test_set_get_remove_user_bocked_words_paginated():
     assert blocked_words == []
     assert next_page == 0
 
-    dao.r.flushall()
 
-
-def test_set_get_remove_user_bocked_words():
+def test_set_get_remove_user_bocked_words(dao, message):
     dao.save_user_blocked_word(message, "wid0")
     blocked_words = dao.get_user_blocked_words(chat_id)
     assert blocked_words == ["wid0"]
@@ -82,10 +98,8 @@ def test_set_get_remove_user_bocked_words():
     blocked_words = dao.get_user_blocked_words(chat_id)
     assert blocked_words == []
 
-    dao.r.flushall()
 
-
-def test_get_add_remove_user_level():
+def test_get_add_remove_user_level(dao, message):
     levels_to_remove = list(utils.POSSIBLE_USER_LEVELS)
     level_to_add = 'advanced'
     test_levels = list(utils.POSSIBLE_USER_LEVELS)

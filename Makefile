@@ -9,7 +9,7 @@ tests:
 		--cov=daily_word_bot/ \
 		--cov-fail-under=99 \
 		--junitxml=reports/tests/report.xml \
-		--flake8 ./ \
+		--flake8 tests/ daily_word_bot/ \
 		--cache-clear
 
 

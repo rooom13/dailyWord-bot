@@ -4,8 +4,8 @@ resource "aws_iam_role" "lambda_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "lambda.amazonaws.com" }
     }]
   })
@@ -43,7 +43,7 @@ resource "aws_lambda_function" "webhook" {
   s3_key           = aws_s3_object.lambda_code.key
   source_code_hash = filebase64sha256("../deployment-package.zip")
   runtime          = "python3.10"
-  timeout          = 60
+  timeout          = var.lambda_function_timeout_seconds
   memory_size      = 256
 
   vpc_config {
@@ -53,10 +53,11 @@ resource "aws_lambda_function" "webhook" {
 
   environment {
     variables = {
-      BOT_TOKEN      = var.bot_token
-      ADMIN_CHAT_IDS = var.admin_chat_ids
-      ENV            = "live"
-      REDIS_HOST     = aws_elasticache_serverless_cache.redis.endpoint[0].address
+      BOT_TOKEN                     = var.bot_token
+      ADMIN_CHAT_IDS                = var.admin_chat_ids
+      ENV                           = "live"
+      REDIS_HOST                    = aws_elasticache_serverless_cache.redis.endpoint[0].address
+      AWS_LAMBDA_FUNCTION_TIMEOUT_S = var.lambda_function_timeout_seconds - 5 #  5 seconds of grace
     }
   }
 

@@ -1,6 +1,7 @@
 import json
 import logging
 import signal
+import os
 from contextlib import contextmanager
 
 logger = logging.getLogger()
@@ -9,6 +10,9 @@ logger.setLevel(logging.INFO)
 
 class TimeoutException(Exception):
     pass
+
+
+AWS_LAMBDA_FUNCTION_TIMEOUT_S = int(os.getenv('AWS_LAMBDA_FUNCTION_TIMEOUT_S', '40'))
 
 
 @contextmanager
@@ -41,7 +45,7 @@ def lambda_handler(event, context):
             body = json.loads(event['body'])
 
             try:
-                with timeout(30):
+                with timeout(AWS_LAMBDA_FUNCTION_TIMEOUT_S):
                     from daily_word_bot.app import App
                     app = App()
                     app.process_update(body)
