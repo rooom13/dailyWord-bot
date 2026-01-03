@@ -18,7 +18,41 @@ Just open Telegram and start a conversation with [**@dailyWord_bot**](https://te
 | ------ | ------ |
 | development | python |
 | database | redis |
-| deployment | Docker, docker-compose |
+| deployment | AWS Lambda, Terraform, Docker |
+| scheduled tasks | AWS EventBridge (CloudWatch Events) |
 | CI | Github Actions to enforce merge checks for tests, static analysis & coverage |
+
+## AWS Infrastructure
+
+The bot is deployed on AWS using Terraform for infrastructure as code. The infrastructure includes:
+
+### Lambda Functions
+- **webhook Lambda**: Handles incoming Telegram webhook requests
+- **scheduler Lambda**: Runs scheduled tasks (e.g., updating word bank)
+
+### Scheduled Tasks
+The scheduler Lambda is triggered daily at **12:30 PM UTC** using AWS EventBridge (CloudWatch Events) with a cron expression: `cron(30 12 * * ? *)`
+
+**Note**: AWS EventBridge cron expressions use UTC timezone. To schedule for a different timezone:
+- 12:30 PM UTC = 1:30 PM CET (Central European Time)
+- 12:30 PM UTC = 2:30 PM CEST (Central European Summer Time)
+
+### Deployment
+
+1. Build the deployment package:
+   ```bash
+   make build
+   ```
+
+2. Deploy infrastructure with Terraform:
+   ```bash
+   make deploy
+   ```
+
+3. Set up required environment variables in `terraform.tfvars`:
+   ```hcl
+   bot_token      = "your-telegram-bot-token"
+   admin_chat_ids = "comma,separated,admin,ids"
+   ```
 
 

@@ -135,6 +135,7 @@ resource "aws_security_group" "redis" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
+    description     = "Allow Lambda to access Redis"
     from_port       = 6379
     to_port         = 6379
     protocol        = "tcp"

@@ -19,4 +19,10 @@ build_lambda:
 terraform_apply:
 	cd terraform && set -a && . ../.env && set +a && terraform apply -auto-approve
 
+terraform_validate:
+	cd terraform && set -a && . ../.env && terraform fmt && terraform validate
+
+terraform_plan:
+	cd terraform && set -a && . ../.env && set +a && terraform plan
+
 deploy: build_lambda terraform_apply

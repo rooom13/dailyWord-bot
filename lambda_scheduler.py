@@ -21,7 +21,7 @@ def lambda_handler(event, context):
         app.word_bank.update()
 
         # Pass the detail or the whole event to handle different schedules
-        app.process_send_word(event.get('detail', {}))
+        app.process_send_word()
         return {
             'statusCode': 200,
             'body': json.dumps('Scheduled event processed')

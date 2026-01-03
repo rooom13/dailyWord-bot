@@ -1,3 +1,25 @@
+# Local variables for reusable Lambda configuration
+locals {
+  lambda_runtime     = "python3.10"
+  lambda_memory_size = 256
+  lambda_timeout     = var.lambda_function_timeout_seconds
+
+  # Common environment variables for all Lambda functions
+  lambda_environment_variables = {
+    BOT_TOKEN                     = var.bot_token
+    ADMIN_CHAT_IDS                = var.admin_chat_ids
+    ENV                           = "live"
+    REDIS_HOST                    = aws_elasticache_serverless_cache.redis.endpoint[0].address
+    AWS_LAMBDA_FUNCTION_TIMEOUT_S = var.lambda_function_timeout_seconds - 5 # 5 seconds of grace
+  }
+
+  # Common VPC configuration
+  lambda_vpc_config = {
+    subnet_ids         = [aws_subnet.private_1.id, aws_subnet.private_2.id]
+    security_group_ids = [aws_security_group.lambda.id]
+  }
+}
+
 # IAM Role for Lambda
 resource "aws_iam_role" "lambda_role" {
   name = "${var.project_name}-lambda-role"
@@ -42,23 +64,17 @@ resource "aws_lambda_function" "webhook" {
   s3_bucket        = aws_s3_bucket.lambda_code.id
   s3_key           = aws_s3_object.lambda_code.key
   source_code_hash = filebase64sha256("../deployment-package.zip")
-  runtime          = "python3.10"
-  timeout          = var.lambda_function_timeout_seconds
-  memory_size      = 256
+  runtime          = local.lambda_runtime
+  timeout          = local.lambda_timeout
+  memory_size      = local.lambda_memory_size
 
   vpc_config {
-    subnet_ids         = [aws_subnet.private_1.id, aws_subnet.private_2.id]
-    security_group_ids = [aws_security_group.lambda.id]
+    subnet_ids         = local.lambda_vpc_config.subnet_ids
+    security_group_ids = local.lambda_vpc_config.security_group_ids
   }
 
   environment {
-    variables = {
-      BOT_TOKEN                     = var.bot_token
-      ADMIN_CHAT_IDS                = var.admin_chat_ids
-      ENV                           = "live"
-      REDIS_HOST                    = aws_elasticache_serverless_cache.redis.endpoint[0].address
-      AWS_LAMBDA_FUNCTION_TIMEOUT_S = var.lambda_function_timeout_seconds - 5 #  5 seconds of grace
-    }
+    variables = local.lambda_environment_variables
   }
 
   depends_on = [
@@ -86,4 +102,54 @@ resource "aws_lambda_permission" "function_url_invoke_function" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.webhook.function_name
   principal     = "*"
+}
+
+# Lambda Function for Scheduler
+resource "aws_lambda_function" "scheduler" {
+  function_name    = "${var.project_name}-scheduler"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "lambda_scheduler.lambda_handler"
+  s3_bucket        = aws_s3_bucket.lambda_code.id
+  s3_key           = aws_s3_object.lambda_code.key
+  source_code_hash = filebase64sha256("../deployment-package.zip")
+  runtime          = local.lambda_runtime
+  timeout          = local.lambda_timeout
+  memory_size      = local.lambda_memory_size
+
+  vpc_config {
+    subnet_ids         = local.lambda_vpc_config.subnet_ids
+    security_group_ids = local.lambda_vpc_config.security_group_ids
+  }
+
+  environment {
+    variables = local.lambda_environment_variables
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.lambda_basic,
+    aws_iam_role_policy_attachment.lambda_vpc
+  ]
+}
+
+# EventBridge Rule to trigger scheduler at 12:30 PM UTC daily
+resource "aws_cloudwatch_event_rule" "scheduler_trigger" {
+  name                = "${var.project_name}-scheduler-trigger"
+  description         = "Trigger scheduler Lambda at configured time daily"
+  schedule_expression = var.scheduler_cron_expression
+}
+
+# EventBridge Target
+resource "aws_cloudwatch_event_target" "scheduler_lambda" {
+  rule      = aws_cloudwatch_event_rule.scheduler_trigger.name
+  target_id = "SchedulerLambda"
+  arn       = aws_lambda_function.scheduler.arn
+}
+
+# Lambda Permission for EventBridge
+resource "aws_lambda_permission" "allow_eventbridge" {
+  statement_id  = "AllowExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.scheduler.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.scheduler_trigger.arn
 }

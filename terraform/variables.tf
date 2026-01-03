@@ -27,3 +27,10 @@ variable "lambda_function_timeout_seconds" {
   type        = number
   default     = 60
 }
+
+variable "scheduler_cron_expression" {
+  description = "Cron expression for the scheduler trigger (UTC timezone)"
+  type        = string
+  default     = "cron(30 12 * * ? *)" # Daily at 12:30 PM UTC
+}
+
