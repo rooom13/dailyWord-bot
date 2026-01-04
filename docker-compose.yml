@@ -1,14 +1,36 @@
 version: '3'
 
 services:
-  redis:
-    image: redis:alpine
-    container_name: "redis"
+  # Redis (commented out - using DynamoDB instead)
+  # redis:
+  #   image: redis:alpine
+  #   container_name: "redis"
+  #   ports:
+  #       - "6379:6379"
+  #   volumes:
+  #       - /data/redis_daily_word_bot:/data
+  #   restart: always
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: "localstack-dynamodb"
     ports:
-        - "6379:6379"
+      - "4566:4566"  # LocalStack gateway
+    environment:
+      - SERVICES=dynamodb
+      - DEBUG=0
+      - PERSISTENCE=1
+      - SKIP_INFRA_DOWNLOADS=1
+      - DISABLE_CORS_CHECKS=1
+      - LS_LOG=warn
     volumes:
-        - /data/redis_daily_word_bot:/data
+      - "localstack-data:/var/lib/localstack"
     restart: always
+    healthcheck:
+      test: ["CMD", "awslocal", "dynamodb", "list-tables"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   daily_word_bot_app:
     build: .
@@ -17,13 +39,23 @@ services:
     env_file:
       - .env
     links: 
-      - redis
+      - localstack
+      # - redis  # Commented out - using DynamoDB
     depends_on:
-      - "redis"
-    volumes:
-        - /data/redis_daily_word_bot:/data
+      localstack:
+        condition: service_healthy
+      # - "redis"  # Commented out - using DynamoDB
     ports:
       - "8443:8443"
     restart: always
     environment: 
-      - VERSION=$VERSION
+      # Override/add specific environment variables for DynamoDB
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_DEFAULT_REGION=eu-central-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    # volumes:  # Commented out - not needed for DynamoDB
+    #     - /data/redis_daily_word_bot:/data
+
+volumes:
+  localstack-data:

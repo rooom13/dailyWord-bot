@@ -11,6 +11,7 @@ dependencies = [
     "gspread",
     "pandas",
     "pydrive",
+    "boto3>=1.28.0",
 ]
 
 [dependency-groups]
@@ -22,6 +23,8 @@ dev = [
     "flake8==4.0.1",
     "fakeredis",
     "autopep8",
+    "moto>=5.1.19",
+    "testcontainers[localstack]>=4.0.0",
 ]
 
 [tool.pytest.ini_options]

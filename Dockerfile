@@ -15,8 +15,9 @@ RUN uv sync --frozen --no-dev
 # Copy application files
 COPY service-account.json ./
 COPY ./daily_word_bot ./daily_word_bot
+COPY ./scripts ./scripts
 
 EXPOSE 8443
 
-# Run the application using uv
-CMD ["uv", "run", "python", "-m", "daily_word_bot"]
+# Use entrypoint script to handle initialization
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]
