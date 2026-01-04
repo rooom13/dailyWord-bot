@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 from telegram import Message, Chat
 
-from daily_word_bot.db import DAO
+from daily_word_bot.dao.redis_dao import DAO
 from daily_word_bot import utils
 
 
@@ -22,7 +22,7 @@ test_user_info = dict(
 @pytest.fixture
 def dao():
     """Create a DAO instance with a fake Redis connection."""
-    with patch('daily_word_bot.db.redis.Redis') as mock_redis:
+    with patch('daily_word_bot.dao.redis_dao.redis.Redis') as mock_redis:
         # Mock the ping method to avoid connection attempts
         mock_instance = Mock()
         mock_instance.ping.return_value = True

@@ -15,7 +15,7 @@ from telegram.ext import (Updater,
 
 from daily_word_bot.config import config
 from daily_word_bot import utils
-from daily_word_bot.db import DAO
+from daily_word_bot.dao.redis_dao import DAO
 from daily_word_bot.word_bank import WordBank
 from daily_word_bot.backup_service import BackupService
 
