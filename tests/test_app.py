@@ -17,7 +17,7 @@ def test_is_admin():
 def app():
     utils.fetch_contributors = MagicMock()
     # Mock DAO to avoid Redis connection during App initialization
-    with patch('daily_word_bot.app.DAO') as mock_dao:
+    with patch('daily_word_bot.app.RedisDAO') as mock_dao:
         mock_dao.return_value = MagicMock()
         app = App()
         app.dao = MagicMock()

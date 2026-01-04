@@ -1,3 +1,6 @@
+from daily_word_bot.dao.redis_dao import RedisDAO
+from daily_word_bot.dao.redis_dao import DAO
+
 import html
 
 from functools import wraps
@@ -15,7 +18,6 @@ from telegram.ext import (Updater,
 
 from daily_word_bot.config import config
 from daily_word_bot import utils
-from daily_word_bot.dao.redis_dao import DAO
 from daily_word_bot.word_bank import WordBank
 from daily_word_bot.backup_service import BackupService
 
@@ -372,7 +374,7 @@ class App:
     def __init__(self):
         self.start_date = datetime.now()
         logger.info("Initializing bot...")
-        self.dao = DAO(config.REDIS_HOST)
+        self.dao = RedisDAO(config.REDIS_HOST)
         logger.info("DAO initialized.")
         self.__word_bank = None  # Lazy loaded
         self.backup_service = None  # BackupService()

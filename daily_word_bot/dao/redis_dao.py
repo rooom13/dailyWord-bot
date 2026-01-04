@@ -4,11 +4,12 @@ import json
 import logging
 from telegram import Message
 
+from daily_word_bot.dao.dao import DAO
 
 logger = logging.getLogger()
 
 
-class DAO:
+class RedisDAO(DAO):
 
     def __init__(self, host: str):
         port: int = 6379
