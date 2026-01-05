@@ -7,9 +7,12 @@ from daily_word_bot import utils
 Config = namedtuple("Config", [
     "ADMIN_CHAT_IDS",
     "BOT_TOKEN",
+    "USE_REDIS",
     "REDIS_HOST",
     "DYNAMODB_ENDPOINT_URL",
     "DYNAMODB_REGION",
+    "DYNAMODB_USERS_TABLE",
+    "DYNAMODB_BLOCKED_WORDS_TABLE",
     "WORD_BANK_LOCAL",
     "VERSION",
     "BACKUP_FILE_PATH_IN",
@@ -23,11 +26,14 @@ live_config = Config(
     REDIS_HOST=os.getenv("REDIS_HOST"),
     DYNAMODB_ENDPOINT_URL=os.getenv("AWS_ENDPOINT_URL"),  # For LocalStack
     DYNAMODB_REGION=os.getenv("AWS_DEFAULT_REGION", "eu-central-1"),
+    DYNAMODB_USERS_TABLE=os.getenv("DYNAMODB_USERS_TABLE", "DailyWordBot-Users"),
+    DYNAMODB_BLOCKED_WORDS_TABLE=os.getenv("DYNAMODB_BLOCKED_WORDS_TABLE", "DailyWordBot-BlockedWords"),
     WORD_BANK_LOCAL=False,
     VERSION=os.getenv("VERSION"),
     BACKUP_FILE_PATH_IN=os.getenv("BACKUP_FILE_PATH_IN"),
     BACKUP_FOLDER_ID_OUT=os.getenv("BACKUP_FOLDER_ID_OUT"),
-    BACKUP_FILE_ID_OUT=os.getenv("BACKUP_FILE_ID_OUT")
+    BACKUP_FILE_ID_OUT=os.getenv("BACKUP_FILE_ID_OUT"),
+    USE_REDIS=strtobool(os.getenv("USE_REDIS") or "false"),
 )
 
 test_config = Config(
@@ -36,11 +42,14 @@ test_config = Config(
     REDIS_HOST="localhost",
     DYNAMODB_ENDPOINT_URL=None,
     DYNAMODB_REGION="eu-central-1",
+    DYNAMODB_USERS_TABLE="DailyWordBot-Users",
+    DYNAMODB_BLOCKED_WORDS_TABLE="DailyWordBot-BlockedWords",
     WORD_BANK_LOCAL=strtobool(os.getenv("WORD_BANK_LOCAL") or "true"),
     VERSION="aVersion",
     BACKUP_FILE_PATH_IN=os.getenv("BACKUP_FILE_PATH_IN"),
     BACKUP_FOLDER_ID_OUT=os.getenv("BACKUP_FOLDER_ID_OUT"),
-    BACKUP_FILE_ID_OUT=os.getenv("BACKUP_FILE_ID_OUT")
+    BACKUP_FILE_ID_OUT=os.getenv("BACKUP_FILE_ID_OUT"),
+    USE_REDIS=strtobool(os.getenv("USE_REDIS") or "true"),
 )
 
 

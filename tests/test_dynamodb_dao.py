@@ -31,7 +31,7 @@ def dao(aws_credentials):
 
         # Create Users table
         dynamodb.create_table(
-            TableName='DailyWordBot-Users',
+            TableName=DynamoDBDAO.USERS_TABLE_NAME,
             KeySchema=[
                 {'AttributeName': 'userId', 'KeyType': 'HASH'}
             ],
@@ -43,7 +43,7 @@ def dao(aws_credentials):
 
         # Create BlockedWords table
         dynamodb.create_table(
-            TableName='DailyWordBot-BlockedWords',
+            TableName=DynamoDBDAO.BLOCKED_WORDS_TABLE_NAME,
             KeySchema=[
                 {'AttributeName': 'userId', 'KeyType': 'HASH'},
                 {'AttributeName': 'wordId', 'KeyType': 'RANGE'}

@@ -9,11 +9,19 @@ locals {
     BOT_TOKEN                     = var.bot_token
     ADMIN_CHAT_IDS                = var.admin_chat_ids
     ENV                           = "live"
+    # Redis configuration (commented out - using DynamoDB)
+    USE_REDIS                     = "false"
     REDIS_HOST                    = aws_elasticache_serverless_cache.redis.endpoint[0].address
+    
+    # DynamoDB configuration
+    DYNAMODB_REGION               = var.aws_region
+    DYNAMODB_USERS_TABLE          = aws_dynamodb_table.users.name
+    DYNAMODB_BLOCKED_WORDS_TABLE  = aws_dynamodb_table.blocked_words.name
     AWS_LAMBDA_FUNCTION_TIMEOUT_S = var.lambda_function_timeout_seconds - 5 # 5 seconds of grace
   }
 
-  # Common VPC configuration
+  # Common VPC configuration (optional - not needed for DynamoDB)
+  # Uncomment if you need to access VPC resources like Redis
   lambda_vpc_config = {
     subnet_ids         = [aws_subnet.private_1.id, aws_subnet.private_2.id]
     security_group_ids = [aws_security_group.lambda.id]
@@ -68,6 +76,8 @@ resource "aws_lambda_function" "webhook" {
   timeout          = local.lambda_timeout
   memory_size      = local.lambda_memory_size
 
+  # VPC configuration removed - not needed for DynamoDB
+  # Uncomment if you need to access VPC resources
   vpc_config {
     subnet_ids         = local.lambda_vpc_config.subnet_ids
     security_group_ids = local.lambda_vpc_config.security_group_ids
@@ -79,7 +89,8 @@ resource "aws_lambda_function" "webhook" {
 
   depends_on = [
     aws_iam_role_policy_attachment.lambda_basic,
-    aws_iam_role_policy_attachment.lambda_vpc
+    aws_iam_role_policy_attachment.lambda_vpc,
+    aws_iam_role_policy_attachment.lambda_dynamodb
   ]
 }
 
@@ -116,6 +127,8 @@ resource "aws_lambda_function" "scheduler" {
   timeout          = local.lambda_timeout
   memory_size      = local.lambda_memory_size
 
+  # VPC configuration removed - not needed for DynamoDB
+  # Uncomment if you need to access VPC resources
   vpc_config {
     subnet_ids         = local.lambda_vpc_config.subnet_ids
     security_group_ids = local.lambda_vpc_config.security_group_ids
@@ -127,7 +140,8 @@ resource "aws_lambda_function" "scheduler" {
 
   depends_on = [
     aws_iam_role_policy_attachment.lambda_basic,
-    aws_iam_role_policy_attachment.lambda_vpc
+    aws_iam_role_policy_attachment.lambda_vpc,
+    aws_iam_role_policy_attachment.lambda_dynamodb
   ]
 }
 

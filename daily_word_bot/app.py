@@ -1,4 +1,4 @@
-# from daily_word_bot.dao.redis_dao import RedisDAO
+from daily_word_bot.dao.redis_dao import RedisDAO
 from daily_word_bot.dao.dynamodb_dao import DynamoDBDAO
 from daily_word_bot.dao.dao import DAO
 
@@ -377,11 +377,10 @@ class App:
         logger.info("Initializing bot...")
 
         # Initialize DAO based on configuration
-        self.dao = DynamoDBDAO(
+        self.dao = RedisDAO(config.REDIS_HOST) if config.USE_REDIS else DynamoDBDAO(
             region_name=config.DYNAMODB_REGION,
             endpoint_url=config.DYNAMODB_ENDPOINT_URL
         )
-        # self.dao = RedisDAO(config.REDIS_HOST)
 
         logger.info("DAO initialized.")
         self.__word_bank = None  # Lazy loaded

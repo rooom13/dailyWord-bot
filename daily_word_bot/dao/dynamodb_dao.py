@@ -25,15 +25,13 @@ class DynamoDBDAO(DAO):
         - SK: wordId (String) - word_id
     """
 
-    def __init__(self, users_table_name: str = "DailyWordBot-Users",
-                 blocked_words_table_name: str = "DailyWordBot-BlockedWords",
-                 region_name: str = "eu-central-1",
-                 endpoint_url: str = None):
+    USERS_TABLE_NAME: str = "daily-word-bot-users"
+    BLOCKED_WORDS_TABLE_NAME: str = "daily-word-bot-blocked-words"
+
+    def __init__(self, region_name: str, endpoint_url: str):
         """Initialize DynamoDB connection.
 
         Args:
-            users_table_name: Name of the DynamoDB table for users
-            blocked_words_table_name: Name of the DynamoDB table for blocked words
             region_name: AWS region name
             endpoint_url: Optional endpoint URL for LocalStack or custom endpoints
         """
@@ -47,10 +45,10 @@ class DynamoDBDAO(DAO):
             resource_kwargs['endpoint_url'] = endpoint_url
 
         self.dynamodb = boto3.resource('dynamodb', **resource_kwargs)
-        self.users_table = self.dynamodb.Table(users_table_name)
-        self.blocked_words_table = self.dynamodb.Table(blocked_words_table_name)
+        self.users_table = self.dynamodb.Table(self.USERS_TABLE_NAME)
+        self.blocked_words_table = self.dynamodb.Table(self.BLOCKED_WORDS_TABLE_NAME)
 
-        logger.info(f"Successfully connected to DynamoDB tables: {users_table_name}, {blocked_words_table_name}")
+        logger.info(f"Successfully connected to DynamoDB tables: {self.USERS_TABLE_NAME}, {self.BLOCKED_WORDS_TABLE_NAME}")
 
     def save_user(self, message: Message, levels: list):
         """Save or update user information."""

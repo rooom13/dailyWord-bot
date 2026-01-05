@@ -8,6 +8,17 @@ output "redis_endpoint" {
   description = "Redis cluster endpoint"
 }
 
+# DynamoDB outputs
+output "dynamodb_users_table" {
+  value       = aws_dynamodb_table.users.name
+  description = "DynamoDB Users table name"
+}
+
+output "dynamodb_blocked_words_table" {
+  value       = aws_dynamodb_table.blocked_words.name
+  description = "DynamoDB Blocked Words table name"
+}
+
 output "scheduler_lambda_arn" {
   value       = aws_lambda_function.scheduler.arn
   description = "ARN of the scheduler Lambda function"
