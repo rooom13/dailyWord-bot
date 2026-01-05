@@ -3,10 +3,10 @@ output "webhook_url" {
   description = "Lambda Function URL for Telegram webhook"
 }
 
-output "redis_endpoint" {
-  value       = aws_elasticache_serverless_cache.redis.endpoint[0].address
-  description = "Redis cluster endpoint"
-}
+# output "redis_endpoint" {
+#   value       = aws_elasticache_serverless_cache.redis.endpoint[0].address
+#   description = "Redis cluster endpoint"
+# }
 
 # DynamoDB outputs
 output "dynamodb_users_table" {

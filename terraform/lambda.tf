@@ -11,7 +11,7 @@ locals {
     ENV                           = "live"
     # Redis configuration (commented out - using DynamoDB)
     USE_REDIS                     = "false"
-    REDIS_HOST                    = aws_elasticache_serverless_cache.redis.endpoint[0].address
+    # REDIS_HOST                    = aws_elasticache_serverless_cache.redis.endpoint[0].address
     
     # DynamoDB configuration
     DYNAMODB_REGION               = var.aws_region
@@ -46,10 +46,11 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_vpc" {
-  role       = aws_iam_role.lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-}
+# VPC Access Policy - COMMENTED OUT (only needed for Redis/VPC resources)
+# resource "aws_iam_role_policy_attachment" "lambda_vpc" {
+#   role       = aws_iam_role.lambda_role.name
+#   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+# }
 
 # S3 Bucket for Lambda code
 resource "aws_s3_bucket" "lambda_code" {
@@ -76,12 +77,11 @@ resource "aws_lambda_function" "webhook" {
   timeout          = local.lambda_timeout
   memory_size      = local.lambda_memory_size
 
-  # VPC configuration removed - not needed for DynamoDB
-  # Uncomment if you need to access VPC resources
-  vpc_config {
-    subnet_ids         = local.lambda_vpc_config.subnet_ids
-    security_group_ids = local.lambda_vpc_config.security_group_ids
-  }
+  # VPC configuration - COMMENTED OUT (only needed for Redis/VPC resources)
+  # vpc_config {
+  #   subnet_ids         = local.lambda_vpc_config.subnet_ids
+  #   security_group_ids = local.lambda_vpc_config.security_group_ids
+  # }
 
   environment {
     variables = local.lambda_environment_variables
@@ -89,7 +89,7 @@ resource "aws_lambda_function" "webhook" {
 
   depends_on = [
     aws_iam_role_policy_attachment.lambda_basic,
-    aws_iam_role_policy_attachment.lambda_vpc,
+    # aws_iam_role_policy_attachment.lambda_vpc,  # Not needed without VPC
     aws_iam_role_policy_attachment.lambda_dynamodb
   ]
 }
@@ -127,12 +127,11 @@ resource "aws_lambda_function" "scheduler" {
   timeout          = local.lambda_timeout
   memory_size      = local.lambda_memory_size
 
-  # VPC configuration removed - not needed for DynamoDB
-  # Uncomment if you need to access VPC resources
-  vpc_config {
-    subnet_ids         = local.lambda_vpc_config.subnet_ids
-    security_group_ids = local.lambda_vpc_config.security_group_ids
-  }
+  # VPC configuration - COMMENTED OUT (only needed for Redis/VPC resources)
+  # vpc_config {
+  #   subnet_ids         = local.lambda_vpc_config.subnet_ids
+  #   security_group_ids = local.lambda_vpc_config.security_group_ids
+  # }
 
   environment {
     variables = local.lambda_environment_variables
@@ -140,7 +139,7 @@ resource "aws_lambda_function" "scheduler" {
 
   depends_on = [
     aws_iam_role_policy_attachment.lambda_basic,
-    aws_iam_role_policy_attachment.lambda_vpc,
+    # aws_iam_role_policy_attachment.lambda_vpc,  # Not needed without VPC
     aws_iam_role_policy_attachment.lambda_dynamodb
   ]
 }
